@@ -1,12 +1,12 @@
 module.exports = {
     host: 'localhost',
     user: 'root',
-    password: 'YOUR PASSWORD', // CHANGE THIS
+    password: 'password', // CHANGE THIS
     database: 'shelflog_db',
     port: 3306,
 
     // Connection pool settings
     waitForConnections: true,
-    conectionLimit: 10,
+    connectionLimit: 10,
     queueLimit:0
 }
