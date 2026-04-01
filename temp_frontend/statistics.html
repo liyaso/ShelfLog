@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard • ShelfLog</title>
+    <title>Statistics • ShelfLog</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -15,50 +15,39 @@
     </div>
 
     <div class="nav-container">
-        <a class="active" href="welcome.html">Home</a>
+        <a href="welcome.html">Home</a>
         <a href="index.html">Search</a>
         <a href="mybooks.html">My Books</a>
         <a href="readinglist.html">Reading List</a>
         <a href="reviews.html">Reviews</a>
-        <a href="statistics.html">Statistics</a>
+        <a class="active" href="statistics.html">Statistics</a>
     </div>
 
     <div class="container">
+        <h2>Your Reading Statistics</h2>
 
-        <h2>Welcome back!</h2>
-
-        <!-- Reading Goal Summary -->
-        <div class="goal-box">
-            <h3>Your Reading Goal</h3>
-            <p>You’ve read <strong>0</strong> out of <strong>0</strong> books.</p>
-            <div class="goal-progress">
-                <div class="goal-fill" style="width: 0%;"></div>
-            </div>
-        </div>
-
-        <!-- Currently Reading -->
-        <h3 style="margin-top: 40px;">Currently Reading</h3>
-        <div id="current-reading" class="results"></div>
-
-        <!-- Quick Stats -->
-        <h3 style="margin-top: 40px;">Quick Stats</h3>
         <div class="results">
             <div class="book-card">
-                <h3>Books This Month</h3>
+                <h3>Books Read This Month</h3>
                 <p id="stat-books-month">0</p>
             </div>
+
             <div class="book-card">
-                <h3>Pages This Week</h3>
+                <h3>Pages Read This Week</h3>
                 <p id="stat-pages-week">0</p>
             </div>
+
             <div class="book-card">
                 <h3>Average Pages/Day</h3>
                 <p id="stat-pages-day">0</p>
             </div>
         </div>
 
+        <h3 style="margin-top: 40px;">Goal Progress Over Time</h3>
+        <div id="milestone-chart" style="height: 300px; background: #fff; border-radius: 10px;"></div>
     </div>
 
+    <script src="statistics.js"></script>
 </body>
 
 </html>
