@@ -1,21 +1,26 @@
-<!-- 
- This is a temporary UI to make sure the api requests are successful.
- Use the Live Share extension for live updates.
- 
- By: Mati Sawadogo
--->
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ShelfLog</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <div class = "header">
+
+    <!-- ORIGINAL HEADER -->
+    <div class="header">
         <h1>ShelfLog</h1>
+    </div>
+
+    <!-- NEW NAVIGATION CONTAINER -->
+    <div class="nav-container">
+        <a href="welcome.html">Home</a>
+        <a class="active" href="index.html">Search</a>
+        <a href="mybooks.html">My Books</a>
+        <a href="readinglist.html">Reading List</a>
     </div>
 
     <div class="container">
@@ -31,43 +36,52 @@
 
     </div>
 
+    <!-- POPUP -->
     <div id="book-page" class="book-page hidden">
         <div class="page-content">
             <button id="page-close">x</button>
+
             <div class="page-body">
+
                 <div class="page-left">
                     <div id="page-cover"></div>
+
                     <div class="page-add-rating">
-                    <label>Rate this book</label>
-                    <div class="star-rating">
-                        <span class="star" data-value="1">☆</span>
-                        <span class="star" data-value="2">☆</span>
-                        <span class="star" data-value="3">☆</span>
-                        <span class="star" data-value="4">☆</span>
-                        <span class="star" data-value="5">☆</span>
-                    </div>
-                    <div class="page-rating">
-                        <p>Rating: <span id="book-rating"></span></p>
+                        <label>Rate this book</label>
+                        <div class="star-rating">
+                            <span class="star" data-value="1">☆</span>
+                            <span class="star" data-value="2">☆</span>
+                            <span class="star" data-value="3">☆</span>
+                            <span class="star" data-value="4">☆</span>
+                            <span class="star" data-value="5">☆</span>
+                        </div>
+
+                        <div class="page-rating">
+                            <p>Rating: <span id="book-rating"></span></p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
                 <div class="page-right">
                     <h2 id="page-title"></h2>
                     <p id="page-author"></p>
                     <p id="page-description"></p>
                     <p id="page-genre"></p>
-                    <p id="page-pages"></p> <p id="page-language"></p>
-                    <p id="page-year"></p> <p id="page-publisher"></p>
+                    <p id="page-pages"></p>
+                    <p id="page-language"></p>
+                    <p id="page-year"></p>
+                    <p id="page-publisher"></p>
+
                     <div class="page-action">
                         <button id="add-to-list-button">+ Add to Reading List</button>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
 
-
     <script src="app.js"></script>
 </body>
+
 </html>

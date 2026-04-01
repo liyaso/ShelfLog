@@ -9,45 +9,49 @@
 </head>
 
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <h2 class="nav-logo">ShelfLog</h2>
-        <ul class="nav-links">
-            <li><a href="welcome.html">Home</a></li>
-            <li><a href="mybooks.html">My Books</a></li>
-            <li><a href="readinglist.html">Reading List</a></li>
-            <li><a href="index.html">Search</a></li>
-        </ul>
-    </nav>
 
-    <div class="dashboard-container">
-        <h1>Welcome back, Reader!</h1>
+    <div class="header">
+        <h1>ShelfLog</h1>
+    </div>
+
+    <div class="nav-container">
+        <a class="active" href="welcome.html">Home</a>
+        <a href="index.html">Search</a>
+        <a href="mybooks.html">My Books</a>
+        <a href="readinglist.html">Reading List</a>
+    </div>
+
+    <div class="container">
+        <h2 id="welcome-user">Welcome!</h2>
 
         <div class="goal-box">
             <h3>Your Reading Goal</h3>
             <p>You’ve read <strong>4</strong> out of <strong>12</strong> books this year.</p>
+
             <div class="goal-progress">
                 <div class="goal-fill" style="width: 33%;"></div>
             </div>
         </div>
 
-        <div class="dashboard-grid">
-            <a class="dash-card" href="mybooks.html">
+        <div class="results" style="margin-top: 40px;">
+            <div class="book-card" onclick="location.href='mybooks.html'">
                 <h3>📚 My Books</h3>
                 <p>View all books you’ve added.</p>
-            </a>
-
-            <a class="dash-card" href="readinglist.html">
+            </div>
+        
+            <div class="book-card" onclick="location.href='readinglist.html'">
                 <h3>📝 Reading List</h3>
                 <p>Books you plan to read next.</p>
-            </a>
-
-            <a class="dash-card" href="index.html">
+            </div>
+        
+            <div class="book-card" onclick="location.href='index.html'">
                 <h3>🔍 Search Books</h3>
                 <p>Find new books to explore.</p>
-            </a>
+            </div>
         </div>
     </div>
+
+
 </body>
 
 </html>

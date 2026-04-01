@@ -10,9 +10,14 @@
 
 <body>
 
-    <nav class="navbar">
-        <h2 class="header">ShelfLog</h2>
-    </nav>
+    <div class="header">
+        <h1>ShelfLog</h1>
+    </div>
+
+    <div class="nav-container">
+        <a href="login.html">Login</a>
+        <a class="active" href="signup.html">Sign Up</a>
+    </div>
 
     <div class="auth-container">
         <h1>Create Your Account</h1>
@@ -37,6 +42,29 @@
             Already have an account? <a href="login.html">Log in</a>
         </p>
     </div>
+
+    <script>
+        // SIGNUP LOGIC
+        document.getElementById("signup-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const username = document.getElementById("signup-username").value;
+            const email = document.getElementById("signup-email").value;
+            const password = document.getElementById("signup-password").value;
+            const confirm = document.getElementById("signup-confirm").value;
+
+            if (password !== confirm) {
+                alert("Passwords do not match.");
+                return;
+            }
+
+            const user = { username, email, password };
+            localStorage.setItem("user", JSON.stringify(user));
+
+            alert("Account created! Please log in.");
+            window.location.href = "login.html";
+        });
+    </script>
 
 </body>
 

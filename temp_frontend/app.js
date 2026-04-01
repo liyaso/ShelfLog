@@ -8,7 +8,8 @@ const headers = new Headers({
 });
 
 const options = {
-    method: 'GET'
+    method: 'GET',
+    headers: headers
 };
 
 const searchInput = document.getElementById("search-input");

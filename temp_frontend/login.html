@@ -10,9 +10,14 @@
 
 <body>
 
-    <nav class="navbar">
-        <h2 class="header">ShelfLog</h2>
-    </nav>
+    <div class="header">
+        <h1>ShelfLog</h1>
+    </div>
+
+    <div class="nav-container">
+        <a class="active" href="login.html">Login</a>
+        <a href="signup.html">Sign Up</a>
+    </div>
 
     <div class="auth-container">
         <h1>Welcome Back</h1>
@@ -31,6 +36,26 @@
             New here? <a href="signup.html">Create an account</a>
         </p>
     </div>
+
+    <script>
+        // LOGIN LOGIC
+        document.getElementById("login-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const username = document.getElementById("login-username").value;
+            const password = document.getElementById("login-password").value;
+
+            const storedUser = JSON.parse(localStorage.getItem("user"));
+
+            if (!storedUser || storedUser.username !== username || storedUser.password !== password) {
+                alert("Invalid username or password.");
+                return;
+            }
+
+            localStorage.setItem("authenticated", "true");
+            window.location.href = "welcome.html";
+        });
+    </script>
 
 </body>
 
