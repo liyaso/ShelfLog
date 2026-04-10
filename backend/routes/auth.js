@@ -7,11 +7,11 @@ const router = express.Router();
 
 // SIGNUP
 router.post("/signup", async (req, res) => {
-    const { username, password } = req.body;
+    const { username, email, password } = req.body;
 
     try {
         const [existing] = await pool.query(
-            "SELECT id FROM users WHERE username = ?",
+            "SELECT user_id FROM User WHERE username = ?",
             [username]
         );
 
@@ -22,11 +22,12 @@ router.post("/signup", async (req, res) => {
         const hash = await bcrypt.hash(password, 10);
 
         const [result] = await pool.query(
-            "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-            [username, hash]
+            "INSERT INTO User (username, email, password_hash) VALUES (?, ?, ?)",
+            [username, email, hash]
         );
 
-        res.json({ id: result.insertId, username });
+        res.json({ user_id: result.insertId });
+
     } catch (err) {
         console.error("Signup error:", err);
         res.status(500).json({ error: "Server error" });
@@ -39,7 +40,7 @@ router.post("/login", async (req, res) => {
 
     try {
         const [rows] = await pool.query(
-            "SELECT id, username, password_hash FROM users WHERE username = ?",
+            "SELECT user_id, password_hash FROM User WHERE username = ?",
             [username]
         );
 
@@ -55,12 +56,13 @@ router.post("/login", async (req, res) => {
         }
 
         const token = jwt.sign(
-            { userId: user.id },
+            { userId: user.user_id },
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
         );
 
         res.json({ token });
+
     } catch (err) {
         console.error("Login error:", err);
         res.status(500).json({ error: "Server error" });

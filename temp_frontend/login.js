@@ -6,18 +6,26 @@ form.addEventListener("submit", async (e) => {
     const username = document.getElementById("login-username").value;
     const password = document.getElementById("login-password").value;
 
-    const res = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-    });
+    try {
+        const res = await fetch("http://localhost:5000/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (res.ok) {
-        localStorage.setItem("token", data.token);
-        window.location.href = "welcome.html";
-    } else {
-        alert(data.error || "Login failed");
+        if (res.ok) {
+            // Save JWT token
+            localStorage.setItem("token", data.token);
+
+            // Redirect to dashboard
+            window.location.href = "welcome.html";
+        } else {
+            alert(data.error || "Login failed");
+        }
+    } catch (err) {
+        console.error("Login error:", err);
+        alert("Could not connect to server.");
     }
 });

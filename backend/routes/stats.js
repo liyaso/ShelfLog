@@ -4,7 +4,6 @@ const pool = require("../db_config");
 
 const router = express.Router();
 
-// Auth middleware
 function authRequired(req, res, next) {
     const header = req.headers.authorization;
     if (!header) return res.status(401).json({ error: "Missing token" });
@@ -19,25 +18,13 @@ function authRequired(req, res, next) {
     }
 }
 
-// GET user books
+// GET stats for user
 router.get("/my", authRequired, async (req, res) => {
     const [rows] = await pool.query(
-        "SELECT * FROM UserBooks WHERE user_id = ?",
+        "SELECT * FROM ReadingStatistics WHERE user_id = ?",
         [req.user.userId]
     );
     res.json(rows);
-});
-
-// ADD book
-router.post("/add", authRequired, async (req, res) => {
-    const { title, author, cover_url } = req.body;
-
-    const [result] = await pool.query(
-        "INSERT INTO UserBooks (user_id, title, author, cover_url) VALUES (?, ?, ?, ?)",
-        [req.user.userId, title, author, cover_url]
-    );
-
-    res.json({ id: result.insertId });
 });
 
 module.exports = router;

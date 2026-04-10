@@ -4,7 +4,6 @@ const pool = require("../db_config");
 
 const router = express.Router();
 
-// Auth middleware
 function authRequired(req, res, next) {
     const header = req.headers.authorization;
     if (!header) return res.status(401).json({ error: "Missing token" });
@@ -19,25 +18,21 @@ function authRequired(req, res, next) {
     }
 }
 
-// GET user books
-router.get("/my", authRequired, async (req, res) => {
-    const [rows] = await pool.query(
-        "SELECT * FROM UserBooks WHERE user_id = ?",
-        [req.user.userId]
-    );
-    res.json(rows);
-});
-
-// ADD book
+// ADD REVIEW
 router.post("/add", authRequired, async (req, res) => {
-    const { title, author, cover_url } = req.body;
+    const { bookId, rating, text } = req.body;
 
-    const [result] = await pool.query(
-        "INSERT INTO UserBooks (user_id, title, author, cover_url) VALUES (?, ?, ?, ?)",
-        [req.user.userId, title, author, cover_url]
-    );
+    try {
+        const [result] = await pool.query(
+            "INSERT INTO Review (user_id, book_id, rating, review_text) VALUES (?, ?, ?, ?)",
+            [req.user.userId, bookId, rating, text]
+        );
 
-    res.json({ id: result.insertId });
+        res.json({ review_id: result.insertId });
+    } catch (err) {
+        console.error("Review error:", err);
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
 module.exports = router;
