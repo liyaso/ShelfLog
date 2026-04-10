@@ -26,21 +26,19 @@ async function fetchBooks(query) {
         booksData = cache[query].docs;
         currentPage = 1;
         displayBooks();
-        //displayPagination();
         return;
     }
     try {
-    const apiURL = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&_app=ShelfLog&_email=matisawadogo@email.com`;
-    const response = await fetch(apiURL, options);
-    const data = await response.json();
-    cache[query] = data;
-    booksData = data.docs;
-    currentPage = 1;
-    displayBooks();
-    //displayPagination();
-} catch (error) {
-    console.error("Error fetchig books: ", error)
-    resultsContainer.innerHTML= `<p>Error: ${error.message}</p>`;
+        const apiURL = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&_app=ShelfLog&_email=matisawadogo@email.com`;
+        const response = await fetch(apiURL, options);
+        const data = await response.json();
+        cache[query] = data;
+        booksData = data.docs;
+        currentPage = 1;
+        displayBooks();
+    } catch (error) {
+        console.error("Error fetching books: ", error);
+        resultsContainer.innerHTML = `<p>Error: ${error.message}</p>`;
     }
 }
 
@@ -58,21 +56,21 @@ function displayBooks() {
 
     booksToShow.forEach((book) => {
         const bookCover = book.cover_i
-        ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
-        : "https://via.placeholder.com/150x200?text=No+Image";
+            ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
+            : "https://via.placeholder.com/150x200?text=No+Image";
+
         const bookElement = document.createElement("div");
         bookElement.className = "book-card";
         bookElement.innerHTML = `
-        <img src="${bookCover}" alt="Book Cover">
-        <h3>${book.title}</h3>
-        <p>${book.author_name ? book.author_name.join(", ") : "Unknown Author"}</p>
+            <img src="${bookCover}" alt="Book Cover">
+            <h3>${book.title}</h3>
+            <p>${book.author_name ? book.author_name.join(", ") : "Unknown Author"}</p>
         `;
 
         bookElement.addEventListener("click", () => openBookPage(book));
 
         resultsContainer.appendChild(bookElement);
     });
-
 }
 
 //search button
@@ -80,10 +78,10 @@ searchButton.addEventListener("click", () => {
     const query = searchInput.value.trim();
     if (!query) {
         resultsContainer.innerHTML = "<p>Please enter a search.</p>";
-        return
+        return;
     }
     fetchBooks(query);
-})
+});
 
 //pop-up book page for when you click on a book
 const bookPage = document.getElementById("book-page");
@@ -115,16 +113,16 @@ function openBookPage(book) {
     });
 
     const bookCover = book.cover_i
-    ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
-    : "https://via.placeholder.com/150x200?text=No+Image";
-    pageCover.innerHTML = `
-        <img src="${bookCover}" alt="Book Cover">`;
+        ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
+        : "https://via.placeholder.com/150x200?text=No+Image";
+
+    pageCover.innerHTML = `<img src="${bookCover}" alt="Book Cover">`;
 
     pageTitle.textContent = book.title ?? "Unknown";
     pageAuthor.textContent = book.author_name ? book.author_name.join(", ") : "Unknown";
     pageRating.textContent = book.ratings_average ? `☆ ${book.ratings_average.toFixed(1)}` : "No ratings yet.";
     pageDescription.textContent = book.description ?? "";
-    pageGenre.textContent = book.subject?.slice(0,3).join(", ") ?? "Unknown";
+    pageGenre.textContent = book.subject?.slice(0, 3).join(", ") ?? "Unknown";
     pagePages.textContent = book.number_of_pages_median ? `${book.number_of_pages_median} pages` : "";
     pageLanguage.textContent = book.language?.[0] ?? "";
     pageYear.textContent = book.first_publish_year ?? "";
@@ -141,7 +139,7 @@ pageClose.addEventListener("click", () => {
 bookPage.addEventListener("click", (e) => {
     if (e.target === bookPage) {
         bookPage.classList.add("hidden");
-        currentBook =null;
+        currentBook = null;
     }
 });
 
@@ -155,5 +153,50 @@ stars.forEach(star => {
     });
 });
 
-//TO DO: set up node.js for database queries, save book selected book to readinglist and database
+//  SAVE BOOK TO BACKEND 
+async function saveBookToDatabase(book) {
+    const token = localStorage.getItem("token");
 
+    if (!token) {
+        alert("You must be logged in to save books.");
+        return;
+    }
+
+    const coverUrl = book.cover_i
+        ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
+        : null;
+
+    const payload = {
+        title: book.title,
+        author: book.author_name?.join(", ") || "Unknown",
+        cover_url: coverUrl
+    };
+
+    try {
+        const res = await fetch("http://localhost:5000/api/books/add", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert("Book added to My Books!");
+        } else {
+            alert(data.error || "Could not save book.");
+        }
+    } catch (err) {
+        console.error("Error saving book:", err);
+        alert("Server error — could not save book.");
+    }
+}
+
+// Add to list button
+addToListButton.addEventListener("click", () => {
+    if (!currentBook) return;
+    saveBookToDatabase(currentBook);
+});
