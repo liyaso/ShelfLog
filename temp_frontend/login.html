@@ -37,26 +37,8 @@
         </p>
     </div>
 
-    <!--
-    <script>
-        document.getElementById("login-form").addEventListener("submit", function (e) {
-            e.preventDefault();
+    <script src="login.js"></script>
 
-            const username = document.getElementById("login-username").value;
-            const password = document.getElementById("login-password").value;
-
-            const storedUser = JSON.parse(localStorage.getItem("user"));
-
-            if (!storedUser || storedUser.username !== username || storedUser.password !== password) {
-                alert("Invalid username or password.");
-                return;
-            }
-
-            localStorage.setItem("authenticated", "true");
-            window.location.href = "welcome.html";
-        });
-    </script>
-    -->
 </body>
 
 </html>
