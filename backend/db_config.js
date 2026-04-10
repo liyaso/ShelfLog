@@ -1,12 +1,13 @@
-module.exports = {
+const mysql = require("mysql2/promise");
+
+module.exports = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: 'password', // CHANGE THIS
+    password: 'password',   // change to YOUR MySQL password
     database: 'shelflog_db',
     port: 3306,
 
-    // Connection pool settings
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit:0
-}
+    queueLimit: 0
+});
