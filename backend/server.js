@@ -1,5 +1,9 @@
 //Node Express.js backend set up by Mati Sawadogo
 
+//in terminal run: "npm install bcrypt jsonwebtoken" for the password hash and security
+
+//cd to backend then run "node server.js" in terminal to start server or every time you make changes
+
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
@@ -12,14 +16,19 @@ const SECERET = "shelflog123"
 app.use(cors());
 app.use(express.json());
 
-app.use((req, res, next) => {
-  console.log("Request received:", req.method, req.url);
-  next();
-});
+
 
 //login and signup route
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
+
+//book and author route
+//const bookAuthorRoutes = require("./routes/bookAuthorRoutes");
+//app.use("/api/bookAuthor", bookAuthorRoutes);
+
+//readinglist route
+const readingListRoutes = require("./routes/readingListRoutes");
+app.use("/api/lists", readingListRoutes);
 
 //testing routes
 app.get("/", (req, res) => {

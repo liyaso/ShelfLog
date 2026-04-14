@@ -14,7 +14,9 @@ router.post("/signup", async (req, res) => {
     //check if username already in database
     try {
         const existing_user = await db.query(
-            "SELECT user_id FROM User WHERE username = ?", [username]
+            `SELECT user_id 
+             FROM User 
+             WHERE username = ?`, [username]
         );
 
         if (existing_user[0].length > 0) {
@@ -25,7 +27,8 @@ router.post("/signup", async (req, res) => {
         const password_hash = await bcrypt.hash(password, 10);
         
         await db.query(
-            "INSERT INTO User (username, email, password_hash) VALUES (?, ?, ?)", [username, email, password_hash]
+            `INSERT INTO User (username, email, password_hash) 
+             VALUES (?, ?, ?)`, [username, email, password_hash]
         );
         res.status(201).json({success: true, message: "User registered successfully."});
     } catch (error) {
@@ -41,7 +44,9 @@ router.post("/login", async (req, res) => {
 
     try {
         const results = await db.query(
-            "SELECT * FROM User WHERE username = ?", [username]
+            `SELECT * 
+             FROM User 
+             WHERE username = ?`, [username]
         );
 
         if (results[0].length === 0) {
