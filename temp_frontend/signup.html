@@ -43,10 +43,9 @@
         </p>
     </div>
 
-    <!--
     <script>
         // SIGNUP LOGIC
-        document.getElementById("signup-form").addEventListener("submit", function (e) {
+        document.getElementById("signup-form").addEventListener("submit", async function (e) {
             e.preventDefault();
 
             const username = document.getElementById("signup-username").value;
@@ -59,15 +58,30 @@
                 return;
             }
 
-            const user = { username, email, password };
-            localStorage.setItem("user", JSON.stringify(user));
+            try{
+                //const user = { username, email, password };
+                const response = await fetch("http://localhost:3000/api/auth/signup", {
+                    method: "POST",
+                    headers: {"Content-Type" : "application/json"},
+                    body: JSON.stringify({ username, email, password })
+                });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                alert("Invalid username or password. Try again.");
+                return;
+            }
 
             alert("Account created! Please log in.");
             window.location.href = "login.html";
+        
+        } catch (error) {
+            console.error("Login error: ", error);
+        }         
         });
     </script>
 
-        -->
 </body>
 
 </html>
