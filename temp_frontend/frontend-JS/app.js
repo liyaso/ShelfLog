@@ -108,7 +108,6 @@ const pageRating = document.getElementById("book-rating");
 const pageDescription = document.getElementById("page-description");
 const pageGenre = document.getElementById("page-genre");
 const pagePages = document.getElementById("page-pages");
-const pageLanguage = document.getElementById("page-language");
 const pageYear = document.getElementById("page-year");
 const pagePublisher = document.getElementById("page-publisher");
 
@@ -119,9 +118,68 @@ let currentBook = null;
 let userRating = 0;
 
 // -------------------------------
+// CLEAN DESCRIPTION
+// -------------------------------
+function cleanDescription(text) {
+    if (!text) return "";
+
+    return text
+        .replace(/\[.*?\]\(.*?\)/g, "")        
+        .replace(/https?:\/\/\S+/g, "")        
+        .replace(/See also:.*/gi, "")          
+        .replace(/source:.*/gi, "")            
+        .replace(/\([^)]*source[^)]*\)/gi, "") 
+        .replace(/-{3,}/g, "")                 
+        .replace(/\s+/g, " ")                  
+        .trim();
+}
+
+// -------------------------------
+// DISPLAY FIELD (HIDE IF UNKNOWN)
+// -------------------------------
+function displayField(element, label, value) {
+    if (!value || value === "Unknown") {
+        element.textContent = "";
+        element.style.display = "none";
+    } else {
+        element.style.display = "block";
+        element.textContent = `${label}: ${value}`;
+    }
+}
+
+function cleanGenres(subjects) {
+    if (!subjects || !Array.isArray(subjects)) return "";
+
+    const bannedWords = [
+        "juvenile", "children", "child", "study", "guide", "guides",
+        "series", "fiction for", "film", "movie", "motion picture",
+        "good and evil", "evil", "dementors", "characters", "plots",
+        "analysis", "criticism", "fan", "fanfiction", "adaptations",
+        "harry potter", "hogwarts", "wizarding world"
+    ];
+
+    return subjects
+        .map(s => s.toLowerCase())
+        .filter(s => !bannedWords.some(b => s.includes(b)))
+        .map(s => s.replace(/\bfiction\b/g, "").trim()) // remove trailing "fiction"
+        .map(s => s.replace(/\bnovels?\b/g, "").trim())
+        .map(s => s.replace(/\bseries\b/g, "").trim())
+        .map(s => s.replace(/\bbooks?\b/g, "").trim())
+        .map(s => s.replace(/\bworks?\b/g, "").trim())
+        .map(s => s.replace(/\benglish\b/g, "").trim())
+        .map(s => s.replace(/\bamerican\b/g, "").trim())
+        .map(s => s.replace(/\b20th century\b/g, "").trim())
+        .filter(s => s.length > 2)
+        .slice(0, 5) // limit to 5 clean genres
+        .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(", ");
+}
+
+
+// -------------------------------
 // OPEN BOOK DETAILS POPUP
 // -------------------------------
-function openBookPage(book) {
+async function openBookPage(book) {
     currentBook = book;
     userRating = 0;
 
@@ -135,36 +193,59 @@ function openBookPage(book) {
         : "https://via.placeholder.com/150x200?text=No+Image";
 
     pageCover.innerHTML = `<img src="${cover}">`;
-
     pageTitle.textContent = book.title ?? "Unknown";
     pageAuthor.textContent = book.author_name?.join(", ") ?? "Unknown";
-    pageRating.textContent = book.ratings_average
-        ? `☆ ${book.ratings_average.toFixed(1)}`
-        : "No ratings yet.";
 
-    pageDescription.textContent = book.description ?? "";
-    pageGenre.textContent = book.subject?.slice(0, 3).join(", ") ?? "Unknown";
-    pagePages.textContent = book.number_of_pages_median
-        ? `${book.number_of_pages_median} pages`
-        : "";
-    pageLanguage.textContent = book.language?.[0] ?? "";
-    pageYear.textContent = book.first_publish_year ?? "";
-    pagePublisher.textContent = book.publisher?.[0] ?? "";
+    pageDescription.textContent = "Loading description...";
+
+    try {
+        const workKey = book.key;
+        const url = `https://openlibrary.org${workKey}.json`;
+
+        const res = await fetch(url);
+        const full = await res.json();
+
+        // DESCRIPTION
+        let rawDescription = "";
+        if (full.description) {
+            rawDescription = typeof full.description === "string"
+                ? full.description
+                : full.description.value;
+        }
+        displayField(pageDescription, "Description", cleanDescription(rawDescription));
+
+        // GENRES
+        const genres = full.subjects
+            ? cleanGenres(full.subjects)
+            : "Unknown";
+        displayField(pageGenre, "Genre", genres);
+
+        // PAGES
+        const pages = full.number_of_pages
+            ? `${full.number_of_pages} pages`
+            : book.number_of_pages_median
+                ? `${book.number_of_pages_median} pages`
+                : "Unknown";
+        displayField(pagePages, "Pages", pages);
+
+        // YEAR
+        const year = full.first_publish_date ?? book.first_publish_year ?? "Unknown";
+        displayField(pageYear, "Year", year);
+
+        // PUBLISHER
+        const publisher = full.publishers
+            ? full.publishers.join(", ")
+            : book.publisher?.[0] ?? "Unknown";
+        displayField(pagePublisher, "Publisher", publisher);
+
+    } catch (err) {
+        console.error("Error loading full book details:", err);
+        pageDescription.textContent = "Error loading full details.";
+    }
 
     bookPage.classList.remove("hidden");
+    attachViewReviewsHandler();
 }
-
-// Close popup
-pageClose.addEventListener("click", () => {
-    bookPage.classList.add("hidden");
-});
-
-// Close when clicking outside
-bookPage.addEventListener("click", (e) => {
-    if (e.target === bookPage) {
-        bookPage.classList.add("hidden");
-    }
-});
 
 // -------------------------------
 // STAR RATING
@@ -221,3 +302,29 @@ addToListButton.addEventListener("click", () => {
     if (!currentBook) return;
     saveBookToDatabase(currentBook);
 });
+
+// -------------------------------
+// VIEW REVIEWS BUTTON
+// -------------------------------
+function attachViewReviewsHandler() {
+    const btn = document.getElementById("view-reviews-button");
+    btn.onclick = () => {
+        if (!currentBook || !currentBook.title) return;
+        window.location.href = `bookreviews.html?title=${encodeURIComponent(currentBook.title)}`;
+    };
+}
+
+// -------------------------------
+// CLOSE POPUP
+// -------------------------------
+pageClose.addEventListener("click", () => {
+    bookPage.classList.add("hidden");
+});
+
+// Close when clicking outside the popup content
+bookPage.addEventListener("click", (e) => {
+    if (e.target.id === "book-page") {
+        bookPage.classList.add("hidden");
+    }
+});
+

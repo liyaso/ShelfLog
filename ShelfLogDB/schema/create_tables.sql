@@ -48,6 +48,8 @@ INDEX idx_title (title),
     INDEX idx_isbn (isbn)
 ) ENGINE=InnoDB;
 
+ALTER TABLE Book ADD COLUMN author VARCHAR(255) AFTER title;
+
 CREATE TABLE UserBooks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -56,6 +58,11 @@ CREATE TABLE UserBooks (
     cover_url VARCHAR(500),
     FOREIGN KEY (user_id) REFERENCES User (user_id) ON DELETE CASCADE
 );
+
+ALTER TABLE UserBooks ADD COLUMN book_id INT AFTER user_id;
+
+ALTER TABLE UserBooks
+ADD CONSTRAINT fk_userbooks_book FOREIGN KEY (book_id) REFERENCES Book (book_id) ON DELETE CASCADE;
 
 -- Table 4: ReadingGoal (Stores user reading goals (yearly targets))
 CREATE TABLE ReadingGoal (
@@ -114,8 +121,7 @@ FOREIGN KEY (book_id) REFERENCES Book (book_id) ON DELETE CASCADE,
 UNIQUE KEY unique_user_book (user_id, book_id),
 
 -- Indexes
-INDEX idx_status (status),
-INDEX idx_user_status (user_id, status),
+INDEX idx_status (status), INDEX idx_user_status (user_id, status),
 
 -- Constraint
 CHECK (finish_date IS NULL OR finish_date >= start_date)

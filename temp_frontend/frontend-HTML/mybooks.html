@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Books • ShelfLog</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>ShelfLog</h1>
+    </div>
+
+    <div class="nav-container">
+        <a href="welcome.html">Home</a>
+        <a href="index.html">Search</a>
+        <a class="active" href="mybooks.html">My Books</a>
+        <a href="readinglist.html">Reading List</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="statistics.html">Statistics</a>
+    </div>
+
+    <div class="container">
+        <h2>My Books</h2>
+        <div id="my-books-container" class="results"></div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="reviewModal" class="modal hidden">
+        <div class="modal-content">
+            <span id="closeModal" class="close">&times;</span>
+    
+            <img id="modalCover" class="modal-cover">
+            <h2 id="modalTitle"></h2>
+            <p id="modalAuthor"></p>
+    
+            <label>Rating (1–5):</label>
+            <input type="number" id="modalRating" min="1" max="5" required>
+    
+            <label>Your Review:</label>
+            <textarea id="modalText" required></textarea>
+    
+            <div class="modal-buttons">
+                <button id="saveReview">Save</button>
+                <button id="cancelReview">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Book Options Modal -->
+    <div id="bookOptionsModal" class="modal hidden">
+        <div class="modal-content">
+            <span id="closeOptionsModal" class="close">&times;</span>
+    
+            <img id="optCover" class="modal-cover">
+            <h2 id="optTitle"></h2>
+            <p id="optAuthor"></p>
+    
+            <button id="optAddList">Add to Reading List</button>
+            <button id="optWriteReview">Write Review</button>
+            <button id="optViewReviews">View Reviews</button>
+        </div>
+    </div>
+
+
+    <script src="../frontend-JS/mybooks.js"></script>
+</body>
+
+</html>

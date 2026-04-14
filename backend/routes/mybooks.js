@@ -21,23 +21,66 @@ function authRequired(req, res, next) {
 
 // GET user books
 router.get("/my", authRequired, async (req, res) => {
-    const [rows] = await pool.query(
-        "SELECT * FROM UserBooks WHERE user_id = ?",
-        [req.user.userId]
-    );
-    res.json(rows);
+    try {
+        const [rows] = await pool.query(
+            `SELECT 
+                UserBooks.user_id,
+                UserBooks.book_id,
+                UserBooks.title,
+                UserBooks.author,
+                UserBooks.cover_url,
+                Book.cover_image_url
+             FROM UserBooks
+             JOIN Book ON UserBooks.book_id = Book.book_id
+             WHERE UserBooks.user_id = ?`,
+            [req.user.userId]
+        );
+
+        res.json(rows);
+
+    } catch (err) {
+        console.error("Load My Books error:", err);
+        res.status(500).json({ error: "Server error" });
+    }
 });
+
+
 
 // ADD book
 router.post("/add", authRequired, async (req, res) => {
     const { title, author, cover_url } = req.body;
 
-    const [result] = await pool.query(
-        "INSERT INTO UserBooks (user_id, title, author, cover_url) VALUES (?, ?, ?, ?)",
-        [req.user.userId, title, author, cover_url]
-    );
+    try {
+        const [bookRows] = await pool.query(
+            "SELECT book_id FROM Book WHERE title = ? AND author = ?",
+            [title, author]
+        );
 
-    res.json({ id: result.insertId });
+        let bookId;
+
+        if (bookRows.length) {
+            bookId = bookRows[0].book_id;
+        } else {
+            const [insertBook] = await pool.query(
+                "INSERT INTO Book (title, author, cover_image_url) VALUES (?, ?, ?)",
+                [title, author, cover_url]
+            );
+            bookId = insertBook.insertId;
+        }
+
+        await pool.query(
+            `INSERT IGNORE INTO UserBooks (user_id, book_id, title, author, cover_url)
+             VALUES (?, ?, ?, ?, ?)`,
+            [req.user.userId, bookId, title, author, cover_url]
+        );
+
+        res.json({ book_id: bookId });
+
+    } catch (err) {
+        console.error("Add book error:", err);
+        res.status(500).json({ error: "Server error" });
+    }
 });
+
 
 module.exports = router;
