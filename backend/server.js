@@ -17,18 +17,15 @@ app.use(cors());
 app.use(express.json());
 
 
-
 //login and signup route
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
-//book and author route
-//const bookAuthorRoutes = require("./routes/bookAuthorRoutes");
-//app.use("/api/bookAuthor", bookAuthorRoutes);
 
 //readinglist route
 const readingListRoutes = require("./routes/readingListRoutes");
 app.use("/api/lists", readingListRoutes);
+
 
 //testing routes
 app.get("/", (req, res) => {
