@@ -4,7 +4,7 @@ const cache = {};
 
 //app identification header for openlibrary.org API calls
 const headers = new Headers({
-    "User-Agent": "ShelfLog/1.0 (email@gmail.com)"
+    "User-Agent": "ShelfLog/1.0 (matisawadogo@gmail.com)"
 });
 
 const options = {
@@ -30,7 +30,7 @@ async function fetchBooks(query) {
         return;
     }
     try {
-    const apiURL = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&_app=ShelfLog&_email=matisawadogo@email.com`;
+    const apiURL = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&_app=ShelfLog&_email=matisawadogo@gmail.com`;
     const response = await fetch(apiURL, options);
     const data = await response.json();
     cache[query] = data;
@@ -98,14 +98,57 @@ const pagePages = document.getElementById("page-pages");
 const pageLanguage = document.getElementById("page-language");
 const pageYear = document.getElementById("page-year");
 const pagePublisher = document.getElementById("page-publisher");
+const pageISBN = document.getElementById("page-isbn");
 const addToListButton = document.getElementById("add-to-list-button");
 const stars = document.querySelectorAll(".star");
+
+
+//get book details
+async function fetchBookDetails(bookKey) {
+    if (cache[bookKey]) return cache[bookKey];
+    try {
+        const apiURL2 = `https://openlibrary.org${bookKey}.json`;
+
+        const apiURL3 = `https://openlibrary.org${bookKey}/editions.json`;
+
+        const [worksResponse, editionsResponse] = await Promise.all([fetch(apiURL2), fetch(apiURL3)]);
+
+        const worksData = await worksResponse.json();
+        const editionsData = await editionsResponse.json();
+
+        const edition = editionsData.entries?.find(e => e.number_of_pages&& e.publishers) 
+        ?? editionsData?.find(e => e.number_of_pages)
+        ?? editionsData.entries?.[0] ?? {};
+
+        const details = {
+            description: typeof worksData.description === "string"
+            ? worksData.description : worksData.description?.value ?? "No description available.",
+            genre: worksData.subjects ? worksData.subjects.slice(0,3).join(", ") : "",
+            page_count: edition.number_of_pages ?? "",
+            publisher: edition.publishers?.[0] ?? "",
+            isbn: edition.isbn_13?.[0] ?? ""
+        };
+
+        cache[bookKey] = details;
+        return details
+    
+    } catch (error) {
+        console.error("Error fetching description: ", error);
+        return {
+            description: "Failed to load.",
+            genre: "Failed to load.",
+            page_count: "Failed to load.",
+            publisher: "Failed to load.",
+            isbn: "Failed to load."
+        };
+    }
+}
 
 let userRating = 0;
 let currentBook = null;
 
 //open page of selected book
-function openBookPage(book) {
+async function openBookPage(book) {
     currentBook = book;
     userRating = 0;
 
@@ -117,22 +160,26 @@ function openBookPage(book) {
     const bookCover = book.cover_i
     ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
     : "https://via.placeholder.com/150x200?text=No+Image";
-    pageCover.innerHTML = `
-        <img src="${bookCover}" alt="Book Cover">`;
+    pageCover.innerHTML = `<img src="${bookCover}" alt="Book Cover">`;
+    
+    //book details
+    const details = await fetchBookDetails(book.key);
 
     pageTitle.textContent = book.title ?? "Unknown";
     pageAuthor.textContent = book.author_name ? book.author_name.join(", ") : "Unknown";
     pageRating.textContent = book.ratings_average ? `☆ ${book.ratings_average.toFixed(1)}` : "No ratings yet.";
-    pageDescription.textContent = book.description ?? "";
-    pageGenre.textContent = book.subject?.slice(0,3).join(", ") ?? "Unknown";
-    pagePages.textContent = book.number_of_pages_median ? `${book.number_of_pages_median} pages` : "";
-    pageLanguage.textContent = book.language?.[0] ?? "";
+    pageDescription.textContent = details.description;
+    pageGenre.textContent = details.genre || book.subjects?.slice(0,3).join(", ") || "";
+    pagePages.textContent = details.page_count ? `${details.page_count} pages` : "";
+    pageLanguage.textContent = book.language?.find(lang => lang === "eng" || lang === "en") ? "English" : book.language?.[0] ?? "";
+    pagePublisher.textContent = details.publisher ? `Publisher: ${details.publisher}` : "";
     pageYear.textContent = book.first_publish_year ?? "";
-    pagePublisher.textContent = book.publisher?.[0] ?? "";
+    pageISBN.textContent = details.isbn ? `ISBN: ${details.isbn}` : "";
 
     bookPage.classList.remove("hidden");
 }
 
+//entering and exiting book page popup
 pageClose.addEventListener("click", () => {
     bookPage.classList.add("hidden");
     currentBook = null;
@@ -145,6 +192,7 @@ bookPage.addEventListener("click", (e) => {
     }
 });
 
+//star rating
 stars.forEach(star => {
     star.addEventListener("click", () => {
         userRating = star.dataset.value;
@@ -154,6 +202,4 @@ stars.forEach(star => {
         });
     });
 });
-
-//TO DO: set up node.js for database queries, save book selected book to readinglist and database
 

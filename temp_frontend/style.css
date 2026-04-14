@@ -189,6 +189,28 @@ body {
     margin-top: 10px;
 }
 
+.page-style {
+    display: flex;
+    gap: 8px;
+    color: #7e7e7e;
+    font-size: 0.85rem;
+    margin: 3px 0;
+}
+
+.page-style span:not(:last-child)::after {
+    content: ",";
+}
+
+.page-style span:empty {
+    display: none;
+}
+
+.page-isbn {
+    color: #7e7e7e;
+    font-size: 0.85rem;
+    margin: 3px 0;
+}
+
 .page-left {
     display: flex;
     flex-direction: column;
@@ -203,9 +225,7 @@ body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-/* ============================
-   STAR RATING
-============================ */
+
 .page-add-rating {
     text-align: center;
 }
@@ -217,6 +237,9 @@ body {
     margin-bottom: 8px;
 }
 
+/* ============================
+   STAR RATING
+============================ */
 .star-rating {
     display: inline-flex;
     gap: 5px;
