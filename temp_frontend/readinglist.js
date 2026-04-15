@@ -47,14 +47,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function openList(id) {
         currentList = lists.find(l => l.id === id);
+        if (!currentList) return;
+
         selectedListTitle.textContent = currentList.name;
         selectedListTitle.classList.remove("hidden");
 
-        popup.classList.add("hidden"); // close any open popup
-
+        popup.classList.add("hidden");
         renderBooks();
     }
-
 
     function renderBooks() {
         readingListContainer.innerHTML = currentList.books.map(book => `
@@ -91,6 +91,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const name = newListName.value.trim();
         if (!name) return;
 
+        if (lists.some(l => l.name.toLowerCase() === name.toLowerCase())) {
+            alert("A list with this name already exists.");
+            return;
+        }
+
         lists.push({
             id: Date.now().toString(),
             name,
@@ -105,15 +110,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function openBookPopup(key) {
         currentBook = currentList.books.find(b => b.key === key);
-        if (!currentBook) {
-            alert("Book not found in this list.");
-            return;
-        }
+        if (!currentBook) return;
+
+        const finished = currentBook.dateRead
+            ? new Date(currentBook.dateRead).toLocaleDateString()
+            : "Not finished";
+
+        const rating = currentBook.rating
+            ? `Rating: ${currentBook.rating}★`
+            : "No rating yet";
 
         popupBookInfo.innerHTML = `
             <img src="${currentBook.cover}" class="popup-cover">
             <h2>${currentBook.title}</h2>
             <p>${currentBook.author}</p>
+            <p>${rating}</p>
+            <p>Finished: ${finished}</p>
         `;
 
         reviewText.value = currentBook.review || "";
@@ -124,7 +136,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     saveReviewBtn.addEventListener("click", () => {
         currentBook.review = reviewText.value;
+        currentBook.dateRead = new Date().toISOString();
+        currentBook.status = "Finished";
+
         saveLists();
+        renderBooks();
         popup.classList.add("hidden");
     });
 

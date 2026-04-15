@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const container = document.getElementById("reviews-container");
+    const reviewsContainer = document.getElementById("reviews-container");
+
     const popup = document.getElementById("review-popup");
     const popupClose = document.getElementById("popup-close");
     const popupBookInfo = document.getElementById("popup-book-info");
@@ -7,68 +8,101 @@ document.addEventListener("DOMContentLoaded", () => {
     const saveReviewBtn = document.getElementById("save-review-btn");
     const deleteReviewBtn = document.getElementById("delete-review-btn");
 
-    let list = JSON.parse(localStorage.getItem("readingList")) || [];
+    const popupStars = document.querySelectorAll(".popup-star");
+    let popupRating = 0;
+
+    let lists = JSON.parse(localStorage.getItem("readingLists")) || [];
+    let allBooks = lists.flatMap(list => list.books);
+    let reviewedBooks = allBooks.filter(book => book.review && book.review.trim() !== "");
     let currentBook = null;
 
     function renderReviews() {
-        const reviewedBooks = list.filter(b => b.review && b.review.trim() !== "");
-
-        if (reviewedBooks.length === 0) {
-            container.innerHTML = "<p>You haven't written any reviews yet.</p>";
-            return;
-        }
-
-        container.innerHTML = reviewedBooks.map(book => `
-            <div class="book-card" data-key="${book.key}">
-                <img src="${book.cover}" alt="Book Cover">
-                <h3>${book.title}</h3>
-                <p>${book.author}</p>
-                <p class="review-snippet">"${book.review.slice(0, 60)}..."</p>
-            </div>
-        `).join("");
+        reviewsContainer.innerHTML = reviewedBooks.length === 0
+            ? "<p>You have not written any reviews yet.</p>"
+            : reviewedBooks.map(book => `
+                <div class="book-card" data-key="${book.key}">
+                    <img src="${book.cover}">
+                    <h3>${book.title}</h3>
+                    <p>${book.author}</p>
+                    <p>Rating: ${book.rating || "No rating"}</p>
+                </div>
+            `).join("");
 
         document.querySelectorAll(".book-card").forEach(card => {
-            card.addEventListener("click", () => openPopup(card.dataset.key));
+            card.addEventListener("click", () => openReviewPopup(card.dataset.key));
         });
     }
 
-    function openPopup(bookKey) {
-        currentBook = list.find(b => b.key === bookKey);
+    function openReviewPopup(key) {
+        currentBook = allBooks.find(b => b.key === key);
+        if (!currentBook) return;
+
+        popupRating = Number(currentBook.rating) || 0;
+
+        const finished = currentBook.dateRead
+            ? new Date(currentBook.dateRead).toLocaleDateString()
+            : "Not finished";
 
         popupBookInfo.innerHTML = `
             <img src="${currentBook.cover}" class="popup-cover">
             <h2>${currentBook.title}</h2>
             <p>${currentBook.author}</p>
+            <p>Finished: ${finished}</p>
         `;
 
-        reviewText.value = currentBook.review || "";
+        // Reset stars
+        popupStars.forEach(s => {
+            s.textContent = s.dataset.value <= popupRating ? "★" : "☆";
+        });
 
+        reviewText.value = currentBook.review || "";
         popup.classList.remove("hidden");
     }
 
-    popupClose.addEventListener("click", () => {
-        popup.classList.add("hidden");
-        currentBook = null;
+    popupClose.addEventListener("click", () => popup.classList.add("hidden"));
+
+    // ⭐ Rating stars inside popup
+    popupStars.forEach(star => {
+        star.addEventListener("click", () => {
+            popupRating = Number(star.dataset.value);
+
+            popupStars.forEach(s => {
+                s.textContent = s.dataset.value <= popupRating ? "★" : "☆";
+            });
+        });
     });
 
+    // ⭐ Save review (rating required)
     saveReviewBtn.addEventListener("click", () => {
-        if (!currentBook) return;
+        if (popupRating === 0) {
+            alert("Please rate this book before saving your review.");
+            return;
+        }
 
+        currentBook.rating = popupRating;
         currentBook.review = reviewText.value;
-        localStorage.setItem("readingList", JSON.stringify(list));
+        currentBook.dateRead = currentBook.dateRead || new Date().toISOString();
+        currentBook.status = "Finished";
+
+        localStorage.setItem("readingLists", JSON.stringify(lists));
+
+        reviewedBooks = allBooks.filter(book => book.review && book.review.trim() !== "");
+        renderReviews();
 
         popup.classList.add("hidden");
-        renderReviews();
     });
 
+    // ⭐ Delete review
     deleteReviewBtn.addEventListener("click", () => {
-        if (!currentBook) return;
-
         currentBook.review = "";
-        localStorage.setItem("readingList", JSON.stringify(list));
+        currentBook.rating = 0;
+
+        localStorage.setItem("readingLists", JSON.stringify(lists));
+
+        reviewedBooks = allBooks.filter(book => book.review && book.review.trim() !== "");
+        renderReviews();
 
         popup.classList.add("hidden");
-        renderReviews();
     });
 
     renderReviews();
