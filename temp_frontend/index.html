@@ -17,7 +17,6 @@
     <div class="nav-container">
         <a href="welcome.html">Home</a>
         <a class="active" href="index.html">Search</a>
-        <a href="mybooks.html">My Books</a>
         <a href="readinglist.html">Reading List</a>
         <a href="reviews.html">Reviews</a>
         <a href="statistics.html">Statistics</a>
@@ -31,11 +30,11 @@
         </div>
 
         <div class="results" id="results"></div>
-
         <div id="pagination" class="pagination"></div>
 
     </div>
 
+    <!-- BOOK DETAILS POPUP -->
     <div id="book-page" class="book-page hidden">
         <div class="page-content">
             <button id="page-close">x</button>
@@ -66,17 +65,21 @@
                     <p id="page-author"></p>
                     <p id="page-description"></p>
                     <p id="page-genre"></p>
+
                     <div class="page-style">
                         <span id="page-pages"></span>
                         <span id="page-language"></span>
                     </div>
+
                     <div class="page-style">
                         <span id="page-year"></span>
                         <span id="page-publisher"></span>
                     </div>
+
                     <div class="page-isbn">
                         <span id="page-isbn"></span>
                     </div>
+
                     <div class="page-action">
                         <button id="add-to-list-button">+ Add to Reading List</button>
                     </div>
@@ -86,7 +89,21 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- CONFIRMATION POPUP -->
+    <div id="confirm-add-popup" class="modal hidden">
+        <div class="modal-content">
+            <h3>Add to Reading List?</h3>
+            <p id="confirm-book-title"></p>
+
+            <div class="modal-actions">
+                <button id="confirm-add-btn" class="confirm-btn">Add</button>
+                <button id="cancel-add-btn" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+
+    <script src="frontend-JS/app.js"></script>
 </body>
 
 </html>

@@ -134,6 +134,21 @@ body {
     margin: 0;
 }
 
+.book-info {
+    padding: 10px;
+    max-width: 300px;
+}
+
+.book-info p {
+    margin: 4px 0;
+}
+
+.book-info .description {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #444;
+}
+
 /* ============================
    POPUP BOOK PAGE
 ============================ */
