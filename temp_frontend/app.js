@@ -214,28 +214,40 @@ stars.forEach(star => {
 });
 
 //create reading list
-document.getElementById("create-list-from-search").addEventListener("click", () => {
+document.getElementById("create-list-from-search").addEventListener("click", async () => {
     const name = prompt("Enter a name for your new reading list:");
     if (!name) return;
 
-    const lists = JSON.parse(localStorage.getItem("readingLists")) || [];
+    const user_id = localStorage.getItem("user_id");
 
-    const newList = {
-        id: Date.now().toString(),
-        name,
-        books: []
-    };
+    try {
+        const res = await fetch("http://localhost:3000/api/lists/create", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body : JSON.stringify({
+                user_id,
+                name,
+                description: "",
+                is_public: false
+            })
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+            alert(data.error || "Failed to create list");
+            return;
+        }
 
-    lists.push(newList);
-    localStorage.setItem("readingLists", JSON.stringify(lists));
-
-    alert(`Created list "${name}". Now select it.`);
+        alert(`Created list "${name}". Now select it.`);
+    } catch (error) {
+        console.error(error);
+    }
 
     document.getElementById("choose-list-popup").classList.add("hidden");
 });
 
 //open choose-list popup
-addToListButton.addEventListener("click", () => {
+addToListButton.addEventListener("click", async () => {
     if (!currentBook) return;
 
     bookPage.classList.add("hidden");
@@ -243,7 +255,18 @@ addToListButton.addEventListener("click", () => {
     const choosePopup = document.getElementById("choose-list-popup");
     const chooseContainer = document.getElementById("choose-list-container");
 
-    const lists = JSON.parse(localStorage.getItem("readingLists")) || [];
+    const user_id = localStorage.getItem("user_id");
+
+    let lists = [];
+
+    try {
+        const res = await fetch(`http://localhost:3000/api/lists/user/${user_id}`);
+
+        lists = await res.json();
+    } catch (error) {
+        console.error(error);
+        chooseContainer.innerHTML = "<p>Error loading lists</p>";
+    }
 
     chooseContainer.innerHTML = "";
 
@@ -256,7 +279,7 @@ addToListButton.addEventListener("click", () => {
             btn.textContent = list.name;
 
             btn.addEventListener("click", () => {
-                addBookToList(list.id);
+                addBookToList(list.list_id);
                 choosePopup.classList.add("hidden");
             });
 
@@ -273,12 +296,7 @@ document.getElementById("choose-close").addEventListener("click", () => {
 });
 
 //add book to list
-function addBookToList(listId) {
-    const lists = JSON.parse(localStorage.getItem("readingLists")) || [];
-    const list = lists.find(l => l.id === listId);
-
-    if (!list) return;
-
+async function addBookToList(listId) {
     const bookCover = currentBook.cover_i
         ? `https://covers.openlibrary.org/b/id/${currentBook.cover_i}-M.jpg`
         : "https://via.placeholder.com/150x200?text=No+Image";
@@ -287,22 +305,44 @@ function addBookToList(listId) {
         key: currentBook.key,
         title: currentBook.title,
         author: currentBook.author_name ? currentBook.author_name.join(", ") : "Unknown",
-        cover: bookCover,
-        isbn: currentDetails.isbn || "",
-        review: "",
-        rating: currentBook.rating || 0,
-        genre: currentDetails.genre || "",
-        page_count: currentDetails.page_count || 0,
-        status: "Not Finished",
-        dateRead: null
+        cover_i: bookCover,
+        first_publish_year: currentBook.first_publish_year
     };
 
-    if (!list.books.some(b => b.key === bookToSave.key)) {
-        list.books.push(bookToSave);
-        localStorage.setItem("readingLists", JSON.stringify(lists));
+    const detailsToSave = {
+        isbn: currentDetails?.isbn || "",
+        genre: currentDetails?.genre || "",
+        page_count: currentDetails?.page_count || "",
+        description: currentDetails?.description || "",
+        publisher: currentDetails?.publisher || "",
+    };
 
-        alert(`Added to "${list.name}"`);
-    } else {
-        alert("This book is already in this list.");
+    try {
+        const res = await fetch("http://localhost:3000/api/lists/add-book", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body : JSON.stringify({
+                list_id: listId,
+                book: bookToSave,
+                details: detailsToSave,
+                notes: "",
+                priority: 0
+            })
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+            if (res.status === 409) {
+                alert("Book already in reading list.");
+            } else {
+                alert(data.error || "Failed to add book");
+            }
+            return;
+        }
+
+        alert("Added to list!");
+        
+    } catch (error) {
+        console.error(error);
     }
 }

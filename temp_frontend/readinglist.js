@@ -16,20 +16,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const saveReviewBtn = document.getElementById("save-review-btn");
     const removeBookBtn = document.getElementById("remove-book-btn");
 
-    let lists = JSON.parse(localStorage.getItem("readingLists")) || [];
+    let lists = [];
     let currentList = null;
     let currentBook = null;
 
-    function saveLists() {
-        localStorage.setItem("readingLists", JSON.stringify(lists));
+    const user_id = localStorage.getItem("user_id");
+
+    async function loadLists() {
+        try {
+            const res = await fetch(`http://localhost:3000/api/lists/user/${user_id}`);
+            lists = await res.json();
+
+            console.log(lists);
+            renderLists();
+
+        } catch (error) {
+            console.error("Failed to load lists.", error);
+        }
     }
 
     function renderLists() {
         listsContainer.innerHTML = lists.map(list => `
-            <div class="list-card" data-id="${list.id}">
+            <div class="list-card" data-id="${list.list_id}">
                 <h3>${list.name}</h3>
-                <p>${list.books.length} books</p>
-                <button class="delete-list-btn" data-delete="${list.id}">Delete List</button>
+                <p>${list.book_count || 0} books</p>
+                <button class="delete-list-btn" data-delete="${list.list_id}">Delete List</button>
             </div>
         `).join("");
 
@@ -45,15 +56,22 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function openList(id) {
-        currentList = lists.find(l => l.id === id);
-        if (!currentList) return;
+    async function openList(list_id) {
+        try {
+            const res = await fetch(`http://localhost:3000/api/lists/${list_id}`);
+            const list = await res.json();
 
-        selectedListTitle.textContent = currentList.name;
-        selectedListTitle.classList.remove("hidden");
+            currentList = list;
 
-        popup.classList.add("hidden");
-        renderBooks();
+            selectedListTitle.textContent = currentList.name;
+            selectedListTitle.classList.remove("hidden");
+
+            popup.classList.add("hidden");
+            renderBooks();
+
+        } catch (error) {
+            console.error("Failed to open list:", error);
+        }
     }
 
     function renderBooks() {
@@ -82,7 +100,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 book.status = "Reading";
                 book.dateStarted = new Date().toISOString();
 
-                saveLists();
                 renderBooks();
                 showStartReadingPopup(book.title);
             });
@@ -107,10 +124,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 2000);
     }
 
-    function deleteList(id) {
-        lists = lists.filter(l => l.id !== id);
-        saveLists();
-        renderLists();
+    async function deleteList(list_id) {
+        try {
+            await fetch(`http://localhost:3000/api/lists/delete/${list_id}`, {
+                method: "DELETE"
+            });
+
+            loadLists();
+
+        } catch (error) {
+            console.error("Failed to delete list:", error);
+        }
         readingListContainer.innerHTML = "";
         selectedListTitle.classList.add("hidden");
     }
@@ -124,23 +148,38 @@ document.addEventListener("DOMContentLoaded", () => {
         newListName.value = "";
     });
 
-    saveListBtn.addEventListener("click", () => {
+    saveListBtn.addEventListener("click", async () => {
         const name = newListName.value.trim();
         if (!name) return;
 
-        if (lists.some(l => l.name.toLowerCase() === name.toLowerCase())) {
-            alert("A list with this name already exists.");
-            return;
-        }
+        try {
+            const res = await fetch("http://localhost:3000/api/lists/create", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body : JSON.stringify({
+                    user_id,
+                    name,
+                    description: "",
+                    is_public: false
+                })
+            });
 
-        lists.push({
-            id: Date.now().toString(),
-            name,
-            books: []
-        });
+            const data = await res.json();
+            
+            if (!res.ok) {
+                if (res.status === 409) {
+                    alert("A list with this name already exists.");
+                } else {
+                    alert(data.error || "Failed to create list.");
+                }
+                return;
+            }
 
-        saveLists();
-        renderLists();
+            loadLists();
+        
+        } catch (error) {
+        console.error(error);
+    }
         createListPopup.classList.add("hidden");
         newListName.value = "";
     });
@@ -176,17 +215,22 @@ document.addEventListener("DOMContentLoaded", () => {
         currentBook.dateRead = new Date().toISOString();
         currentBook.status = "Finished";
 
-        saveLists();
         renderBooks();
         popup.classList.add("hidden");
     });
 
-    removeBookBtn.addEventListener("click", () => {
-        currentList.books = currentList.books.filter(b => b.key !== currentBook.key);
-        saveLists();
-        renderBooks();
+    removeBookBtn.addEventListener("click", async () => {
+        await fetch("http://localhost:3000/api/lists/delete-book", {
+            method: "DELETE",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                list_id: currentList.list_id,
+                book_id: currentBook.book_id
+            })
+        });
+        await openList(currentList.list_id);
         popup.classList.add("hidden");
     });
 
-    renderLists();
+    loadLists();
 });

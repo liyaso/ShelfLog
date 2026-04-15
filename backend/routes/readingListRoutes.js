@@ -10,9 +10,11 @@ router.get("/user/:user_id", async (req, res) => {
     //displays all user's reading lists
     try {
         const [lists] = await db.query (
-            `SELECT list_id, name, description, created_date, is_public 
-             FROM ReadingList
-             WHERE user_id = ?
+            `SELECT rl.list_id, rl.name, rl.description, rl.created_date, rl.is_public, COUNT(l.book_id) AS book_count
+             FROM ReadingList rl
+             LEFT JOIN ListItem l ON rl.list_id = l.list_id
+             WHERE rl.user_id = ?
+             GROUP BY rl.list_id
              ORDER BY created_date DESC`, [user_id]
         );
 
@@ -122,7 +124,7 @@ router.post("/add-book", async (req, res) => {
         }
 
         //insert the book's author info into our database
-        const name = book.author_name?.[0] || "Unknown";
+        const name = book.author_name?.[0] || book.author || "Unknown";
 
         //check if author is already in our database
         let [existingAuthor] = await db.query (

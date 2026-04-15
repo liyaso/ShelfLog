@@ -7,7 +7,7 @@ router.get("/:user_id", async (req, res) => {
     const { user_id } = req.params;
 
     try {
-        const [stats] = await db.query(
+        const [stats] = await db.query (
             `SELECT
                 COUNT(CASE WHEN status = 'Finished' THEN 1 END) AS books_read,
                 SUM(b.page_count) AS pages_read,
