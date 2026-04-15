@@ -17,7 +17,6 @@
     <div class="nav-container">
         <a href="welcome.html">Home</a>
         <a class="active" href="index.html">Search</a>
-        <a href="mybooks.html">My Books</a>
         <a href="readinglist.html">Reading List</a>
         <a href="reviews.html">Reviews</a>
         <a href="statistics.html">Statistics</a>
@@ -36,6 +35,7 @@
 
     </div>
 
+    <!-- BOOK DETAILS POPUP -->
     <div id="book-page" class="book-page hidden">
         <div class="page-content">
             <button id="page-close">x</button>
@@ -66,23 +66,42 @@
                     <p id="page-author"></p>
                     <p id="page-description"></p>
                     <p id="page-genre"></p>
+
                     <div class="page-style">
                         <span id="page-pages"></span>
                         <span id="page-language"></span>
                     </div>
+
                     <div class="page-style">
                         <span id="page-year"></span>
                         <span id="page-publisher"></span>
                     </div>
+
                     <div class="page-isbn">
                         <span id="page-isbn"></span>
                     </div>
+
                     <div class="page-action">
                         <button id="add-to-list-button">+ Add to Reading List</button>
                     </div>
                 </div>
 
             </div>
+        </div>
+    </div>
+
+    <!-- CHOOSE LIST POPUP -->
+    <div id="choose-list-popup" class="popup hidden">
+        <div class="popup-content">
+            <button id="choose-close" class="close-btn">×</button>
+
+            <h3>Select a Reading List</h3>
+
+            <div id="choose-list-container"></div>
+
+            <button id="create-list-from-search" class="primary" style="margin-top:15px;">
+                + Create New List
+            </button>
         </div>
     </div>
 

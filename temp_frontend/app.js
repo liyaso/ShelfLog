@@ -203,9 +203,71 @@ stars.forEach(star => {
     });
 });
 
+//create reading list and add book to it
+document.getElementById("create-list-from-search").addEventListener("click", () => {
+    const name = prompt("Enter a name for your new reading list:");
+    if (!name) return;
 
+    const lists = JSON.parse(localStorage.getItem("readingLists")) || [];
+
+    const newList = {
+        id: Date.now().toString(),
+        name,
+        books: []
+    };
+
+    lists.push(newList);
+    localStorage.setItem("readingLists", JSON.stringify(lists));
+
+    alert(`Created list "${name}". Now select it.`);
+
+    document.getElementById("choose-list-popup").classList.add("hidden");
+});
+
+
+// OPEN CHOOSE-LIST POPUP
 addToListButton.addEventListener("click", () => {
     if (!currentBook) return;
+
+    bookPage.classList.add("hidden");
+
+    const choosePopup = document.getElementById("choose-list-popup");
+    const chooseContainer = document.getElementById("choose-list-container");
+
+    const lists = JSON.parse(localStorage.getItem("readingLists")) || [];
+
+    chooseContainer.innerHTML = "";
+
+    if (lists.length === 0) {
+        chooseContainer.innerHTML = "<p>You have no reading lists yet.</p>";
+    } else {
+        lists.forEach(list => {
+            const btn = document.createElement("button");
+            btn.className = "choose-list-btn";
+            btn.textContent = list.name;
+
+            btn.addEventListener("click", () => {
+                addBookToList(list.id);
+                choosePopup.classList.add("hidden");
+            });
+
+            chooseContainer.appendChild(btn);
+        });
+    }
+
+    choosePopup.classList.remove("hidden");
+});
+
+// CLOSE CHOOSE-LIST POPUP
+document.getElementById("choose-close").addEventListener("click", () => {
+    document.getElementById("choose-list-popup").classList.add("hidden");
+});
+
+function addBookToList(listId) {
+    const lists = JSON.parse(localStorage.getItem("readingLists")) || [];
+    const list = lists.find(l => l.id === listId);
+
+    if (!list) return;
 
     const bookCover = currentBook.cover_i
         ? `https://covers.openlibrary.org/b/id/${currentBook.cover_i}-M.jpg`
@@ -217,17 +279,17 @@ addToListButton.addEventListener("click", () => {
         author: currentBook.author_name ? currentBook.author_name.join(", ") : "Unknown",
         cover: bookCover,
         isbn: pageISBN.textContent.replace("ISBN: ", "") || "",
+        review: ""
     };
 
-    let list = JSON.parse(localStorage.getItem("readingList")) || [];
+    if (!list.books.some(b => b.key === bookToSave.key)) {
+        list.books.push(bookToSave);
+        localStorage.setItem("readingLists", JSON.stringify(lists));
 
-    // avoid duplicates
-    if (!list.some(b => b.key === bookToSave.key)) {
-        list.push(bookToSave);
-        localStorage.setItem("readingList", JSON.stringify(list));
-        alert("Book added to your reading list!");
+        alert(`Added to "${list.name}"`);
+
+        document.getElementById("choose-list-popup").classList.add("hidden");
     } else {
-        alert("This book is already in your reading list.");
+        alert("This book is already in this list.");
     }
-});
-
+}

@@ -17,7 +17,6 @@
     <div class="nav-container">
         <a href="welcome.html">Home</a>
         <a href="index.html">Search</a>
-        <a href="mybooks.html">My Books</a>
         <a href="readinglist.html">Reading List</a>
         <a class="active" href="reviews.html">Reviews</a>
         <a href="statistics.html">Statistics</a>
@@ -26,6 +25,22 @@
     <div class="container">
         <h2>My Reviews</h2>
         <div id="reviews-container" class="results"></div>
+    </div>
+
+    <!-- Review Popup -->
+    <div id="review-popup" class="popup hidden">
+        <div class="popup-content">
+            <button id="popup-close" class="close-btn">×</button>
+
+            <div id="popup-book-info"></div>
+
+            <textarea id="review-text" placeholder="Edit your review..."></textarea>
+
+            <div class="popup-actions">
+                <button id="save-review-btn" class="primary">Save Changes</button>
+                <button id="delete-review-btn" class="danger">Delete Review</button>
+            </div>
+        </div>
     </div>
 
     <script src="reviews.js"></script>
