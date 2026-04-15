@@ -43,12 +43,12 @@ app.use("/api/goals", goalRoutes);
 
 
 //milestone route
-//const milestoneRoutes = require("./routes/milestoneRoutes");
-//app.use("/api/milestones", milestoneRoutes);
+const milestoneRoutes = require("./routes/milestoneRoutes");
+app.use("/api/milestones", milestoneRoutes);
 
 //statistics route
-//const statisticsRoutes = require("./routes/statisticsRoutes");
-//app.use("/api/statistics", statisticsRoutes);
+const statisticsRoutes = require("./routes/statisticsRoutes");
+app.use("/api/statistics", statisticsRoutes);
 
 //testing routes
 app.get("/", (req, res) => {
