@@ -26,10 +26,29 @@ app.use("/api/auth", authRoutes);
 const readingListRoutes = require("./routes/readingListRoutes");
 app.use("/api/lists", readingListRoutes);
 
+
 //reviews route
 const reviewRoutes = require("./routes/reviewRoutes");
 app.use("/api/reviews", reviewRoutes);
 
+
+//progress route
+const progressRoutes = require("./routes/progressRoutes");
+app.use("/api/progress", progressRoutes);
+
+
+//goal route
+//const goalRoutes = require("./routes/goalRoutes");
+//app.use("/api/goals", goalRoutes);
+
+
+//milestone route
+//const milestoneRoutes = require("./routes/milestoneRoutes");
+//app.use("/api/milestones", milestoneRoutes);
+
+//statistics route
+//const statisticsRoutes = require("./routes/statisticsRoutes");
+//app.use("/api/statistics", statisticsRoutes);
 
 //testing routes
 app.get("/", (req, res) => {
