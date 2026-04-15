@@ -62,12 +62,49 @@ document.addEventListener("DOMContentLoaded", () => {
                 <img src="${book.cover}">
                 <h3>${book.title}</h3>
                 <p>${book.author}</p>
+
+                ${book.status === "Reading" ? 
+                    `<span class="reading-tag">Reading</span>` :
+                    `<button class="start-reading-btn" data-start="${book.key}">Start Reading</button>`
+                }
             </div>
         `).join("");
 
+        // Start Reading buttons
+        document.querySelectorAll(".start-reading-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation(); // prevent opening popup
+
+                const key = btn.dataset.start;
+                const book = currentList.books.find(b => b.key === key);
+                if (!book) return;
+
+                book.status = "Reading";
+                book.dateStarted = new Date().toISOString();
+
+                saveLists();
+                renderBooks();
+                showStartReadingPopup(book.title);
+            });
+        });
+
+        // Book card click → open popup
         document.querySelectorAll(".book-card").forEach(card => {
             card.addEventListener("click", () => openBookPopup(card.dataset.key));
         });
+    }
+
+    function showStartReadingPopup(title) {
+        const popup = document.getElementById("start-reading-popup");
+        const msg = document.getElementById("start-reading-msg");
+
+        msg.textContent = `"${title}" added to Currently Reading!`;
+
+        popup.classList.remove("hidden");
+
+        setTimeout(() => {
+            popup.classList.add("hidden");
+        }, 2000);
     }
 
     function deleteList(id) {

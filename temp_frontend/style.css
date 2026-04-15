@@ -499,6 +499,51 @@ POPUP MODAL (READING LIST + REVIEW)
     margin: 0 0 10px;
 }
 
+.start-reading-btn {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.start-reading-btn:hover {
+    background: #45a049;
+}
+
+.reading-tag {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 8px;
+    background: #2196F3;
+    color: white;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.small-popup {
+    width: 250px;
+    text-align: center;
+    padding: 20px;
+}
+
+#start-reading-popup {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
 .delete-list-btn {
     background: #d9534f;
     color: white;
@@ -513,7 +558,7 @@ POPUP MODAL (READING LIST + REVIEW)
     background: #b94743;
 }
 
-/* INPUT FIELD */
+
 #new-list-name {
     width: 100%;
     padding: 10px;
@@ -523,3 +568,44 @@ POPUP MODAL (READING LIST + REVIEW)
 }
 
 
+/* ============================
+Statistics Page
+============================ */
+
+.goal-ring-container {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 20px auto;
+}
+
+#goalRing {
+    width: 180px !important;
+    height: 180px !important;
+}
+
+.goal-ring-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+}
+
+/* Set Goal Popup */
+#set-goal-popup .popup-content {
+    width: 300px;
+    text-align: center;
+}
+
+#goal-input {
+    width: 90%;
+    padding: 10px;
+    margin-top: 15px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
