@@ -26,6 +26,10 @@ app.use("/api/auth", authRoutes);
 const readingListRoutes = require("./routes/readingListRoutes");
 app.use("/api/lists", readingListRoutes);
 
+//reviews route
+const reviewRoutes = require("./routes/reviewRoutes");
+app.use("/api/reviews", reviewRoutes);
+
 
 //testing routes
 app.get("/", (req, res) => {
