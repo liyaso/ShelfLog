@@ -38,8 +38,8 @@ app.use("/api/progress", progressRoutes);
 
 
 //goal route
-//const goalRoutes = require("./routes/goalRoutes");
-//app.use("/api/goals", goalRoutes);
+const goalRoutes = require("./routes/goalRoutes.js");
+app.use("/api/goals", goalRoutes);
 
 
 //milestone route
