@@ -203,3 +203,31 @@ stars.forEach(star => {
     });
 });
 
+
+addToListButton.addEventListener("click", () => {
+    if (!currentBook) return;
+
+    const bookCover = currentBook.cover_i
+        ? `https://covers.openlibrary.org/b/id/${currentBook.cover_i}-M.jpg`
+        : "https://via.placeholder.com/150x200?text=No+Image";
+
+    const bookToSave = {
+        key: currentBook.key,
+        title: currentBook.title,
+        author: currentBook.author_name ? currentBook.author_name.join(", ") : "Unknown",
+        cover: bookCover,
+        isbn: pageISBN.textContent.replace("ISBN: ", "") || "",
+    };
+
+    let list = JSON.parse(localStorage.getItem("readingList")) || [];
+
+    // avoid duplicates
+    if (!list.some(b => b.key === bookToSave.key)) {
+        list.push(bookToSave);
+        localStorage.setItem("readingList", JSON.stringify(list));
+        alert("Book added to your reading list!");
+    } else {
+        alert("This book is already in your reading list.");
+    }
+});
+
