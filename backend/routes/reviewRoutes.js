@@ -59,7 +59,7 @@ router.get("/:book_id", async (req, res) => {
 
     try {
         const [reviews] = await db.query (
-            `SELECT r.review_id, r.rating, r.review_text, r.date_posted r.likes_count, u.username
+            `SELECT r.review_id, r.rating, r.review_text, r.date_posted, r.likes_count, u.username
              FROM Review r
              JOIN User u ON r.user_id = u.user_id
              WHERE r.book_id = ?
@@ -73,6 +73,80 @@ router.get("/:book_id", async (req, res) => {
         res.status(500).json({error: "Failed to get reviews."});
     }
 });
+
+
+// get user review of book
+router.get("/user/:user_id", async (req, res) => {
+    const { user_id } = req.params;
+
+    try {
+        const [rows] = await db.query(`
+            SELECT r.book_id, b.title, b.cover_image_url, a.name AS author, r.rating, r.review_text
+            FROM Review r
+            JOIN Book b ON r.book_id = b.book_id
+            LEFT JOIN BookAuthor ba ON b.book_id = ba.book_id
+            LEFT JOIN Author a ON ba.author_id = a.author_id
+            WHERE r.user_id = ?`, [user_id]);
+
+        res.json(rows);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to fetch user reviews." });
+    }
+});
+
+//delete review
+router.delete("/delete", async (req, res) => {
+    const { user_id, book_id } = req.body;
+
+    if (!user_id || !book_id) {
+        return res.status(400).json({ error: "user_id and book_id are required." });
+    }
+
+    try {
+        const [result] = await db.query(
+            `DELETE FROM Review
+             WHERE user_id = ? AND book_id = ?`,
+            [user_id, book_id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Review not found." });
+        }
+
+        // update avg rating after delete
+        await updateBookRating(book_id);
+
+        res.json({ message: "Review deleted successfully." });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to delete review." });
+    }
+});
+
+
+//get book avg_rating by isbn
+router.get("/rating/:isbn", async (req, res) => {
+    const { isbn } = req.params;
+
+    try {
+        const [rows] = await db.query(
+            `SELECT average_rating FROM Book WHERE isbn = ?`, [isbn]
+        );
+
+        if (rows.length === 0) {
+            return res.json({ average_rating: 0 });
+        }
+
+        res.json({ average_rating: rows[0].average_rating });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to fetch rating" });
+    }
+});
+
 
 
 //add like to review 

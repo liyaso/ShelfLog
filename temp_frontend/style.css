@@ -273,8 +273,7 @@ body {
     transition: color 0.2s;
 }
 
-.star.selected,
-.star:hover {
+.star.selected {
     color: #f5a623;
 }
 
@@ -565,6 +564,38 @@ POPUP MODAL (READING LIST + REVIEW)
     margin-top: 15px;
     border-radius: 6px;
     border: 1px solid #ccc;
+}
+
+/* ============================
+STAR RATING (REVIEW POPUP)
+============================ */
+
+.popup-rating {
+    text-align: center; /* centers the label too */
+}
+
+.popup-stars {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.popup-star {
+    font-size: 28px;
+    cursor: pointer;
+    color: #ccc;
+    transition: transform 0.15s ease, color 0.15s ease;
+    user-select: none;
+}
+
+.popup-star:hover {
+    transform: scale(1.2);
+    color: gold;
+}
+
+.popup-star.selected {
+    color: gold;
 }
 
 

@@ -149,6 +149,39 @@ async function fetchBookDetails(bookKey) {
     }
 }
 
+//avg book rating
+async function fetchAverageRating(isbn) {
+    if (!isbn) return 0;
+
+    try {
+        const res = await fetch(`http://localhost:3000/api/reviews/rating/${isbn}`);
+        const data = await res.json();
+        return data.average_rating || 0;
+
+    } catch (error) {
+        console.error(error);
+        return 0;
+    }
+}
+
+//rating stars
+function renderAverageStars(rating) {
+   stars.forEach((star, index) => {
+       const value = index + 1;
+
+       if (value <= Math.round(rating)) {
+           star.textContent = "★";
+           star.classList.add("selected");
+       } else {
+           star.textContent = "☆";
+       }
+   });
+
+   pageRating.textContent = rating
+       ? `${Number(rating).toFixed(1)}`
+       : "No ratings yet.";
+}
+
 //open page of selected book
 async function openBookPage(book) {
     currentBook = book;
@@ -169,9 +202,9 @@ async function openBookPage(book) {
 
     pageTitle.textContent = book.title ?? "Unknown";
     pageAuthor.textContent = book.author_name ? book.author_name.join(", ") : "Unknown";
-    pageRating.textContent = book.ratings_average
-        ? `☆ ${book.ratings_average.toFixed(1)}`
-        : "No ratings yet.";
+    const isbn = currentDetails?.isbn;
+    const avgRating = await fetchAverageRating(currentDetails.isbn);
+    renderAverageStars(avgRating);
     pageDescription.textContent = currentDetails.description;
     pageGenre.textContent = currentDetails.genre;
     pagePages.textContent = currentDetails.page_count ? `${currentDetails.page_count} pages` : "";
@@ -201,17 +234,6 @@ bookPage.addEventListener("click", (e) => {
     }
 });
 
-//star rating
-stars.forEach(star => {
-    star.addEventListener("click", () => {
-        userRating = star.dataset.value;
-        currentBook.rating = Number(userRating);
-        stars.forEach(s => {
-            s.textContent = s.dataset.value <= userRating ? "★" : "☆";
-            s.classList.toggle("selected", s.dataset.value <= userRating);
-        });
-    });
-});
 
 //create reading list
 document.getElementById("create-list-from-search").addEventListener("click", async () => {

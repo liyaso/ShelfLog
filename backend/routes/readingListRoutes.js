@@ -29,6 +29,7 @@ router.get("/user/:user_id", async (req, res) => {
 //getting reading list details
 router.get("/:list_id", async (req, res) => {
     const {list_id} = req.params;
+    const {user_id} = req.query;
 
     //when user clicks on a reading list they get the details and contents of the list
     try {
@@ -44,20 +45,22 @@ router.get("/:list_id", async (req, res) => {
 
         //get books in a reading list
         const [books] = await db.query (
-            `SELECT b.book_id, b.title, b.cover_image_url, b.page_count, l.date_added, l.notes, l.priority, a.name AS author
-             FROM ListItem l
-             JOIN Book b ON l.book_id = b.book_id
-             LEFT JOIN BookAuthor ba ON b.book_id = ba.book_id
-             LEFT JOIN Author a ON ba.author_id = a.author_id
-             WHERE l.list_id = ?
-             ORDER BY l.date_added DESC`, [list_id]
+            `SELECT b.book_id, b.title, b.cover_image_url, b.page_count, l.date_added, l.notes, l.priority, a.name AS author, COALESCE(rp.status, 'Not Started') AS status
+            FROM ListItem l
+            JOIN Book b ON l.book_id = b.book_id
+            LEFT JOIN BookAuthor ba ON b.book_id = ba.book_id
+            LEFT JOIN Author a ON ba.author_id = a.author_id
+            LEFT JOIN ReadingProgress rp 
+                ON rp.book_id = b.book_id AND rp.user_id = ?
+            WHERE l.list_id = ?
+            ORDER BY l.date_added DESC`, [user_id, list_id]
         );
 
         res.json({...list, books});
 
     } catch (error) {
         console.error(error);
-        return res.status(500).json({error: "Failed to fetch list"});
+        return res.status(500).json({error: "Failed to load list"});
     }
 });
 
@@ -112,7 +115,7 @@ router.post("/add-book", async (req, res) => {
                     details.genre?.split(",")[0] || "Unknown", 
                     details.page_count || 1, 
                     details.description || null, 
-                    `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`,
+                    book.cover_i || null,
                     "English",
                     details.publisher || null]
             );

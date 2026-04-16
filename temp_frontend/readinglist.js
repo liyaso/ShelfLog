@@ -16,9 +16,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const saveReviewBtn = document.getElementById("save-review-btn");
     const removeBookBtn = document.getElementById("remove-book-btn");
 
+    const popupStars = document.querySelectorAll(".popup-star");
+    const starContainer = document.querySelector(".popup-stars");
+
     let lists = [];
     let currentList = null;
     let currentBook = null;
+    let popupRating = 0;
 
     const user_id = localStorage.getItem("user_id");
 
@@ -58,10 +62,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function openList(list_id) {
         try {
-            const res = await fetch(`http://localhost:3000/api/lists/${list_id}`);
-            const list = await res.json();
+            const user_id = localStorage.getItem("user_id");
 
-            currentList = list;
+            const res = await fetch(`http://localhost:3000/api/lists/${list_id}?user_id=${user_id}`);
+            const data = await res.json();
+
+            currentList = data;
 
             selectedListTitle.textContent = currentList.name;
             selectedListTitle.classList.remove("hidden");
@@ -76,38 +82,55 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderBooks() {
         readingListContainer.innerHTML = currentList.books.map(book => `
-            <div class="book-card" data-key="${book.key}">
-                <img src="${book.cover}">
+            <div class="book-card" data-id="${book.book_id}">
+                <img src="${book.cover_image_url || book.cover || 'https://via.placeholder.com/150'}" alt = "cover">
                 <h3>${book.title}</h3>
                 <p>${book.author}</p>
 
                 ${book.status === "Reading" ? 
                     `<span class="reading-tag">Reading</span>` :
-                    `<button class="start-reading-btn" data-start="${book.key}">Start Reading</button>`
+                    `<button class="start-reading-btn" data-start="${book.book_id}">Start Reading</button>`
                 }
             </div>
         `).join("");
 
         // Start Reading buttons
         document.querySelectorAll(".start-reading-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
+            btn.addEventListener("click", async (e) => {
                 e.stopPropagation(); // prevent opening popup
 
-                const key = btn.dataset.start;
-                const book = currentList.books.find(b => b.key === key);
-                if (!book) return;
+                const book_id = btn.dataset.start;
+                const user_id = localStorage.getItem("user_id");
 
-                book.status = "Reading";
-                book.dateStarted = new Date().toISOString();
+                try {
+                    const res = await fetch("http://localhost:3000/api/progress", {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body : JSON.stringify({
+                            user_id,
+                            book_id,
+                            status: "Reading",
+                            current_page: 0
+                        })
+                    });
 
-                renderBooks();
-                showStartReadingPopup(book.title);
+                    const data = await res.json();
+                    
+                    if (!res.ok) {
+                        alert(data.error || "Failed to update reading status.");
+                        return;
+                    }
+
+                    await openList(currentList.list_id);
+                } catch (error) {
+                    console.error(error);
+                }
             });
         });
 
         // Book card click → open popup
         document.querySelectorAll(".book-card").forEach(card => {
-            card.addEventListener("click", () => openBookPopup(card.dataset.key));
+            card.addEventListener("click", () => openBookPopup(card.dataset.id));
         });
     }
 
@@ -184,9 +207,31 @@ document.addEventListener("DOMContentLoaded", () => {
         newListName.value = "";
     });
 
-    function openBookPopup(key) {
-        currentBook = currentList.books.find(b => b.key === key);
+    //stars
+    function updatePopupStars(value) {
+        popupStars.forEach(star => {
+            const starValue = Number(star.dataset.value);
+            star.textContent = starValue <= value ? "★" : "☆";
+            star.classList.toggle("selected", starValue <= value);
+        });
+    }
+
+    popupStars.forEach(star => {
+        star.addEventListener("mouseover", () => updatePopupStars(Number(star.dataset.value)));
+        star.addEventListener("click", () => {
+            popupRating = Number(star.dataset.value);
+            updatePopupStars(popupRating);
+        });
+    });
+
+    starContainer.addEventListener("mouseleave", () => updatePopupStars(popupRating));
+
+
+    function openBookPopup(book_id) {
+        currentBook = currentList.books.find(b => String(b.book_id) === String(book_id));
         if (!currentBook) return;
+
+        popupRating = Number(currentBook.rating) || 0;
 
         const finished = currentBook.dateRead
             ? new Date(currentBook.dateRead).toLocaleDateString()
@@ -197,26 +242,51 @@ document.addEventListener("DOMContentLoaded", () => {
             : "No rating yet";
 
         popupBookInfo.innerHTML = `
-            <img src="${currentBook.cover}" class="popup-cover">
+            <img src="${currentBook.cover_image_url || currentBook.cover}" class="popup-cover">
             <h2>${currentBook.title}</h2>
             <p>${currentBook.author}</p>
-            <p>${rating}</p>
-            <p>Finished: ${finished}</p>
         `;
-
+        
+        updatePopupStars(popupRating)
         reviewText.value = currentBook.review || "";
         popup.classList.remove("hidden");
     }
 
     popupClose.addEventListener("click", () => popup.classList.add("hidden"));
 
-    saveReviewBtn.addEventListener("click", () => {
-        currentBook.review = reviewText.value;
-        currentBook.dateRead = new Date().toISOString();
-        currentBook.status = "Finished";
+    saveReviewBtn.addEventListener("click", async () => {
+        const user_id = localStorage.getItem("user_id");
 
-        renderBooks();
-        popup.classList.add("hidden");
+        try {
+            await fetch("http://localhost:3000/api/reviews/add", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body : JSON.stringify({
+                    user_id,
+                    book_id: currentBook.book_id,
+                    rating: popupRating,
+                    review_text: reviewText.value
+                })
+            });
+
+            await fetch("http://localhost:3000/api/progress", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body : JSON.stringify({
+                    user_id,
+                    book_id: currentBook.book_id,
+                    status: "Finished",
+                    current_page: currentBook.page_count || 0
+                })
+            });
+
+            await openList(currentList.list_id);
+        
+            popup.classList.add("hidden");
+
+        } catch (error) {
+            console.error(error);
+        }
     });
 
     removeBookBtn.addEventListener("click", async () => {

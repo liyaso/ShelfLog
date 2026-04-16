@@ -11,17 +11,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const popupStars = document.querySelectorAll(".popup-star");
     let popupRating = 0;
 
-    let lists = JSON.parse(localStorage.getItem("readingLists")) || [];
-    let allBooks = lists.flatMap(list => list.books);
-    let reviewedBooks = allBooks.filter(book => book.review && book.review.trim() !== "");
+    let reviewedBooks =[];
     let currentBook = null;
+
+    const user_id = localStorage.getItem("user_id");
+
+    async function loadReviews() {
+        try {
+            const res = await fetch(`http://localhost:3000/api/reviews/user/${user_id}`);
+            const data = await res.json();
+
+            reviewedBooks = data;
+            renderReviews();
+
+        } catch (err) {
+            console.error("Failed to load reviews:", err);
+        }
+    }
 
     function renderReviews() {
         reviewsContainer.innerHTML = reviewedBooks.length === 0
             ? "<p>You have not written any reviews yet.</p>"
             : reviewedBooks.map(book => `
-                <div class="book-card" data-key="${book.key}">
-                    <img src="${book.cover}">
+                <div class="book-card" data-key="${book.book_id}">
+                    <img src="${book.cover_image_url}">
                     <h3>${book.title}</h3>
                     <p>${book.author}</p>
                     <p>Rating: ${book.rating || "No rating"}</p>
@@ -34,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function openReviewPopup(key) {
-        currentBook = allBooks.find(b => b.key === key);
+        currentBook = reviewedBooks.find(b => String(b.book_id) === String(key));
         if (!currentBook) return;
 
         popupRating = Number(currentBook.rating) || 0;
@@ -44,10 +57,9 @@ document.addEventListener("DOMContentLoaded", () => {
             : "Not finished";
 
         popupBookInfo.innerHTML = `
-            <img src="${currentBook.cover}" class="popup-cover">
+            <img src="${currentBook.cover_image_url || 'https://via.placeholder.com/150'}" class="popup-cover">
             <h2>${currentBook.title}</h2>
             <p>${currentBook.author}</p>
-            <p>Finished: ${finished}</p>
         `;
 
         // Reset stars
@@ -55,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
             s.textContent = s.dataset.value <= popupRating ? "★" : "☆";
         });
 
-        reviewText.value = currentBook.review || "";
+        reviewText.value = currentBook.review_text || "";
         popup.classList.remove("hidden");
     }
 
@@ -73,37 +85,68 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ⭐ Save review (rating required)
-    saveReviewBtn.addEventListener("click", () => {
+    saveReviewBtn.addEventListener("click", async () => {
         if (popupRating === 0) {
             alert("Please rate this book before saving your review.");
             return;
         }
 
-        currentBook.rating = popupRating;
-        currentBook.review = reviewText.value;
-        currentBook.dateRead = currentBook.dateRead || new Date().toISOString();
-        currentBook.status = "Finished";
+        try {
+            const res = await fetch("http://localhost:3000/api/reviews/add", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id,
+                    book_id: currentBook.book_id,
+                    rating: popupRating,
+                    review_text: reviewText.value
+                })
+            });
 
-        localStorage.setItem("readingLists", JSON.stringify(lists));
+            const data = await res.json();
 
-        reviewedBooks = allBooks.filter(book => book.review && book.review.trim() !== "");
-        renderReviews();
+            if (!res.ok) throw new Error(data.error);
 
-        popup.classList.add("hidden");
+            alert("Review saved!");
+
+            popup.classList.add("hidden");
+
+            loadReviews(); // 🆕 refresh data from backend
+
+        } catch (error) {
+            console.error(error);
+            alert("Failed to save review");
+        }
     });
 
     // ⭐ Delete review
-    deleteReviewBtn.addEventListener("click", () => {
-        currentBook.review = "";
-        currentBook.rating = 0;
+    deleteReviewBtn.addEventListener("click", async () => {
+        try {
+            const res = await fetch("http://localhost:3000/api/reviews/delete", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id,
+                    book_id: currentBook.book_id,
+                    rating: 0,
+                    review_text: ""
+                })
+            });
 
-        localStorage.setItem("readingLists", JSON.stringify(lists));
+            if (!res.ok) throw new Error("Delete failed");
 
-        reviewedBooks = allBooks.filter(book => book.review && book.review.trim() !== "");
-        renderReviews();
+            popup.classList.add("hidden");
+            loadReviews();
 
-        popup.classList.add("hidden");
+        } catch (err) {
+            console.error(err);
+            alert("Failed to delete review");
+        }
     });
 
-    renderReviews();
+    loadReviews();
 });
