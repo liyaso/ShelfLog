@@ -18,7 +18,7 @@ router.post("/", async (req, res) => {
              ON DUPLICATE KEY UPDATE
                 status = VALUES(status),
                 current_page = VALUES(current_page),
-                finish_date = VALUES(finish_date)`, [user_id, book_id, status, current_page || 0]
+                finish_date = VALUES(finish_date)`, [user_id, book_id, status, current_page || 0, status === "Finished" ? new Date() : null]
         );
 
         res.json({message: "Reading progress saved!"})
@@ -36,16 +36,18 @@ router.get("/:user_id", async (req, res) => {
 
     try {
         const [rows] = await db.query (
-            `SELECT rp.progress_id, rp.book_id, rp.status, rp.current_page, rp.start_date, rp.finish_date, b.title, b.cover_image_url, b.page_count, 
+            `SELECT rp.progress_id, rp.book_id, rp.status, rp.current_page, rp.start_date, rp.finish_date, b.title, b.cover_image_url, b.page_count, a.name AS author,
             ROUND((rp.current_page * 100.0) / b.page_count, 2) AS completion_percent, 
             CASE 
                 WHEN rp.start_date IS NULL THEN NULL
                 WHEN rp.finish_date IS NOT NULL THEN 
                     rp.current_page / DATEDIFF(rp.finish_date, rp.start_date)
                 ELSE 
-                rp.current_page / DATEDIFF(CURDATE(), rp.start_date) END as reading_speed
+                rp.current_page / NULLIF(DATEDIFF(CURDATE(), rp.start_date), 0) END as reading_speed
              FROM ReadingProgress rp
              JOIN Book b ON rp.book_id = b.book_id
+             LEFT JOIN BookAuthor ba ON b.book_id = ba.book_id
+             LEFT JOIN Author a ON ba.author_id = a.author_id
              WHERE rp.user_id = ?
              ORDER BY rp.start_date DESC`, [user_id]
         );

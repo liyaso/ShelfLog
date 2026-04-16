@@ -1,95 +1,110 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    const user_id = localStorage.getItem("user_id");
+    if (!user_id) {
+        console.error(error);
+        return;
+    }
 
-    const lists = JSON.parse(localStorage.getItem("readingLists")) || [];
-    const allBooks = lists.flatMap(list => list.books);
+    try{
+        const progressRes = await fetch(`http://localhost:3000/api/progress/${user_id}`);
 
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+        const allBooks = await progressRes.json();
 
-    // -------------------------------
-    // BOOKS READ THIS MONTH
-    // -------------------------------
-    const finishedBooks = allBooks.filter(
-        b => b.status === "Finished" || b.dateRead
-    );
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
-    const booksThisMonth = finishedBooks.filter(book => {
-        if (!book.dateRead) return false;
-        const d = new Date(book.dateRead);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    });
+            // -------------------------------
+        // BOOKS READ THIS MONTH
+        // -------------------------------
+        const finishedBooks = allBooks.filter(
+            b => b.status === "Finished"
+        );
 
-    document.getElementById("stat-books-month").textContent = booksThisMonth.length;
+        const booksThisMonth = finishedBooks.filter(book => {
+            if (!book.finish_date) return false;
+            const d = new Date(book.finish_date);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        });
 
-    // -------------------------------
-    // PAGES THIS WEEK
-    // -------------------------------
-    let pagesThisWeek = 0;
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(now.getDate() - 7);
+        document.getElementById("stat-books-month").textContent = booksThisMonth.length;
 
-    finishedBooks.forEach(book => {
-        if (!book.dateRead || !book.pageCount) return;
-        const d = new Date(book.dateRead);
-        if (d >= oneWeekAgo) pagesThisWeek += Number(book.pageCount);
-    });
+        // -------------------------------
+        // PAGES THIS WEEK
+        // -------------------------------
+        let pagesThisWeek = 0;
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(now.getDate() - 7);
 
-    document.getElementById("stat-pages-week").textContent = pagesThisWeek;
+        finishedBooks.forEach(book => {
+            if (!book.finish_date || !book.page_count) return;
+            const d = new Date(book.finish_date);
+            if (d >= oneWeekAgo) pagesThisWeek += Number(book.page_count);
+        });
 
-    // -------------------------------
-    // AVERAGE PAGES PER DAY
-    // -------------------------------
-    let totalPages = 0;
-    let activeDays = new Set();
+        document.getElementById("stat-pages-week").textContent = pagesThisWeek;
 
-    finishedBooks.forEach(book => {
-        if (!book.dateRead || !book.pageCount) return;
+        // -------------------------------
+        // AVERAGE PAGES PER DAY
+        // -------------------------------
+        let totalPages = 0;
+        let activeDays = new Set();
 
-        totalPages += Number(book.pageCount);
+        finishedBooks.forEach(book => {
+            if (!book.finish_date || !book.page_count) return;
 
-        const day = new Date(book.dateRead).toDateString();
-        activeDays.add(day);
-    });
+            totalPages += Number(book.page_count);
 
-    const avgPages = activeDays.size > 0
-        ? Math.round(totalPages / activeDays.size)
-        : 0;
+            const day = new Date(book.finish_date).toDateString();
+            activeDays.add(day);
+        });
 
-    document.getElementById("stat-pages-day").textContent = avgPages;
+        const avgPages = activeDays.size > 0
+            ? Math.round(totalPages / activeDays.size)
+            : 0;
 
-    // -------------------------------
-    // READING GOAL SUMMARY
-    // -------------------------------
-    const yearlyGoal = Number(localStorage.getItem("readingGoal")) || 20;
-    const booksRead = finishedBooks.length;
+        document.getElementById("stat-pages-day").textContent = avgPages;
 
-    const percent = Math.min((booksRead / yearlyGoal) * 100, 100);
+        // -------------------------------
+        // READING GOAL SUMMARY
+        // -------------------------------
+        const goalRes = await fetch(`http://localhost:3000/api/goals/${user_id}`
+            );
+        const goals = await goalRes.json();
 
-    document.querySelector(".goal-box p").innerHTML =
-        `You’ve read <strong>${booksRead}</strong> out of <strong>${yearlyGoal}</strong> books.`;
+        const yearlyGoal = goals.length > 0 ? goals[0].target_books : 20;
+        const booksRead = finishedBooks.length;
 
-    document.querySelector(".goal-fill").style.width = percent + "%";
+        const percent = Math.min((booksRead / yearlyGoal) * 100, 100);
 
-    // -------------------------------
-    // CURRENTLY READING
-    // -------------------------------
-    const currentlyReading = allBooks.filter(
-        b => b.status === "Reading"
-    );
+        document.querySelector(".goal-box p").innerHTML =
+            `You’ve read <strong>${booksRead}</strong> out of <strong>${yearlyGoal}</strong> books.`;
 
-    const container = document.getElementById("current-reading");
+        document.querySelector(".goal-fill").style.width = percent + "%";
 
-    if (currentlyReading.length === 0) {
-        container.innerHTML = "<p>You are not currently reading any books.</p>";
-    } else {
-        container.innerHTML = currentlyReading.map(book => `
-            <div class="book-card">
-                <img src="${book.cover}">
-                <h3>${book.title}</h3>
-                <p>${book.author}</p>
-            </div>
-        `).join("");
+        // -------------------------------
+        // CURRENTLY READING
+        // -------------------------------
+        const currentlyReading = allBooks.filter(
+            b => b.status === "Reading"
+        );
+
+        const container = document.getElementById("current-reading");
+
+        if (currentlyReading.length === 0) {
+            container.innerHTML = "<p>You are not currently reading any books.</p>";
+        } else {
+            container.innerHTML = currentlyReading.map(book => `
+                <div class="book-card">
+                    <img src="${book.cover_image_url}">
+                    <h3>${book.title}</h3>
+                    <p>${book.author}</p>
+                </div>
+            `).join("");
+        }
+
+    } catch (error) {
+        console.error("Failed to load dashboard:", error);
     }
 
 });
