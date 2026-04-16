@@ -9,6 +9,7 @@
 </head>
 
 <body>
+    <button id="logout-btn" class="logout-floating">Logout</button>
 
     <div class="header">
         <h1>ShelfLog</h1>
@@ -29,6 +30,10 @@
             <input type="text" id="search-input" placeholder="Search books by title, author, or ISBN...">
             <button id="search-button">Search</button>
         </div>
+
+        <!-- LOADING INDICATOR -->
+        <div id="loading" class="hidden">Searching...</div>
+
 
         <!-- SEARCH RESULTS -->
         <div class="results" id="results"></div>
@@ -107,6 +112,15 @@
             </button>
         </div>
     </div>
+    <script>
+        document.getElementById("logout-btn").addEventListener("click", () => {
+            const confirmLogout = confirm("Are you sure you want to log out?");
+            if (!confirmLogout) return;
+
+            localStorage.clear();
+            window.location.href = "login.html";
+        });
+    </script>
 
     <script src="app.js"></script>
 </body>

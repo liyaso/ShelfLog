@@ -10,6 +10,27 @@ body {
 }
 
 /* ============================
+   LOGOUT BUTTON
+============================ */
+.logout-floating {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #b8e3e9;
+    color: #060606;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+.logout-floating:hover {
+    background-color: #a0d4d9;
+}
+
+/* ============================
    HEADER
 ============================ */
 .header {
@@ -93,6 +114,22 @@ body {
     background-color: #555;
 }
 
+#loading {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #333;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    z-index: 2000;
+}
+
+.hidden {
+    display: none;
+}
 /* ============================
    BOOK GRID
 ============================ */

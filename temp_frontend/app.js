@@ -21,13 +21,21 @@ let booksPerPage = 25;
 let booksData = [];
 
 //search books
+//search books
 async function fetchBooks(query) {
+    // SHOW LOADING
+    document.getElementById("loading").classList.remove("hidden");
+
     if (cache[query]) {
         booksData = cache[query].docs;
         currentPage = 1;
         displayBooks();
+
+        // HIDE LOADING
+        document.getElementById("loading").classList.add("hidden");
         return;
     }
+
     try {
         const apiURL = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&_app=ShelfLog&_email=matisawadogo@gmail.com`;
         const response = await fetch(apiURL, options);
@@ -40,7 +48,11 @@ async function fetchBooks(query) {
         console.error("Error fetching books: ", error);
         resultsContainer.innerHTML = `<p>Error: ${error.message}</p>`;
     }
+
+    // ALWAYS HIDE LOADING
+    document.getElementById("loading").classList.add("hidden");
 }
+
 
 //display results
 function displayBooks() {

@@ -30,10 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const res = await fetch(`http://localhost:3000/api/lists/user/${user_id}`);
             lists = await res.json();
-
-            console.log(lists);
             renderLists();
-
         } catch (error) {
             console.error("Failed to load lists.", error);
         }
@@ -83,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderBooks() {
         readingListContainer.innerHTML = currentList.books.map(book => `
             <div class="book-card" data-id="${book.book_id}">
-                <img src="${book.cover_image_url || book.cover || 'https://via.placeholder.com/150'}" alt = "cover">
+                <img src="${book.cover_image_url || book.cover || 'https://via.placeholder.com/150'}" alt="cover">
                 <h3>${book.title}</h3>
                 <p>${book.author}</p>
 
@@ -94,10 +91,9 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `).join("");
 
-        // Start Reading buttons
         document.querySelectorAll(".start-reading-btn").forEach(btn => {
             btn.addEventListener("click", async (e) => {
-                e.stopPropagation(); // prevent opening popup
+                e.stopPropagation();
 
                 const book_id = btn.dataset.start;
                 const user_id = localStorage.getItem("user_id");
@@ -128,36 +124,117 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
-        // Book card click → open popup
         document.querySelectorAll(".book-card").forEach(card => {
             card.addEventListener("click", () => openBookPopup(card.dataset.id));
         });
     }
 
-    function showStartReadingPopup(title) {
-        const popup = document.getElementById("start-reading-popup");
-        const msg = document.getElementById("start-reading-msg");
+    function openBookPopup(book_id) {
+        currentBook = currentList.books.find(b => String(b.book_id) === String(book_id));
+        if (!currentBook) return;
 
-        msg.textContent = `"${title}" added to Currently Reading!`;
+        popupRating = Number(currentBook.rating) || 0;
 
+        popupBookInfo.innerHTML = `
+            <img src="${currentBook.cover_image_url || currentBook.cover}" class="popup-cover">
+            <h2>${currentBook.title}</h2>
+            <p>${currentBook.author}</p>
+        `;
+        
+        updatePopupStars(popupRating);
+        reviewText.value = currentBook.review || "";
         popup.classList.remove("hidden");
-
-        setTimeout(() => {
-            popup.classList.add("hidden");
-        }, 2000);
     }
 
+    popupClose.addEventListener("click", () => popup.classList.add("hidden"));
+
+    function updatePopupStars(value) {
+        popupStars.forEach(star => {
+            const starValue = Number(star.dataset.value);
+            star.textContent = starValue <= value ? "★" : "☆";
+            star.classList.toggle("selected", starValue <= value);
+        });
+    }
+
+    popupStars.forEach(star => {
+        star.addEventListener("mouseover", () => updatePopupStars(Number(star.dataset.value)));
+        star.addEventListener("click", () => {
+            popupRating = Number(star.dataset.value);
+            updatePopupStars(popupRating);
+        });
+    });
+
+    starContainer.addEventListener("mouseleave", () => updatePopupStars(popupRating));
+
+    saveReviewBtn.addEventListener("click", async () => {
+        const user_id = localStorage.getItem("user_id");
+
+        try {
+            await fetch("http://localhost:3000/api/reviews/add", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body : JSON.stringify({
+                    user_id,
+                    book_id: currentBook.book_id,
+                    rating: popupRating,
+                    review_text: reviewText.value
+                })
+            });
+
+            await fetch("http://localhost:3000/api/progress", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body : JSON.stringify({
+                    user_id,
+                    book_id: currentBook.book_id,
+                    status: "Finished",
+                    current_page: currentBook.page_count || 0
+                })
+            });
+
+            await openList(currentList.list_id);
+            popup.classList.add("hidden");
+
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    // ⭐ DELETE BOOK — confirmation + book count update
+    removeBookBtn.addEventListener("click", async () => {
+        const confirmDelete = confirm(`Remove "${currentBook.title}" from this list?`);
+        if (!confirmDelete) return;
+
+        await fetch("http://localhost:3000/api/lists/delete-book", {
+            method: "DELETE",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                list_id: currentList.list_id,
+                book_id: currentBook.book_id
+            })
+        });
+
+        await openList(currentList.list_id); 
+        await loadLists(); 
+        popup.classList.add("hidden");
+    });
+
+    // ⭐ DELETE LIST — confirmation added
     async function deleteList(list_id) {
+        const confirmDelete = confirm("Are you sure you want to delete this entire reading list?");
+        if (!confirmDelete) return;
+
         try {
             await fetch(`http://localhost:3000/api/lists/delete/${list_id}`, {
                 method: "DELETE"
             });
 
-            loadLists();
+            await loadLists();
 
         } catch (error) {
             console.error("Failed to delete list:", error);
         }
+
         readingListContainer.innerHTML = "";
         selectedListTitle.classList.add("hidden");
     }
@@ -201,105 +278,11 @@ document.addEventListener("DOMContentLoaded", () => {
             loadLists();
         
         } catch (error) {
-        console.error(error);
-    }
-        createListPopup.classList.add("hidden");
-        newListName.value = "";
-    });
-
-    //stars
-    function updatePopupStars(value) {
-        popupStars.forEach(star => {
-            const starValue = Number(star.dataset.value);
-            star.textContent = starValue <= value ? "★" : "☆";
-            star.classList.toggle("selected", starValue <= value);
-        });
-    }
-
-    popupStars.forEach(star => {
-        star.addEventListener("mouseover", () => updatePopupStars(Number(star.dataset.value)));
-        star.addEventListener("click", () => {
-            popupRating = Number(star.dataset.value);
-            updatePopupStars(popupRating);
-        });
-    });
-
-    starContainer.addEventListener("mouseleave", () => updatePopupStars(popupRating));
-
-
-    function openBookPopup(book_id) {
-        currentBook = currentList.books.find(b => String(b.book_id) === String(book_id));
-        if (!currentBook) return;
-
-        popupRating = Number(currentBook.rating) || 0;
-
-        const finished = currentBook.dateRead
-            ? new Date(currentBook.dateRead).toLocaleDateString()
-            : "Not finished";
-
-        const rating = currentBook.rating
-            ? `Rating: ${currentBook.rating}★`
-            : "No rating yet";
-
-        popupBookInfo.innerHTML = `
-            <img src="${currentBook.cover_image_url || currentBook.cover}" class="popup-cover">
-            <h2>${currentBook.title}</h2>
-            <p>${currentBook.author}</p>
-        `;
-        
-        updatePopupStars(popupRating)
-        reviewText.value = currentBook.review || "";
-        popup.classList.remove("hidden");
-    }
-
-    popupClose.addEventListener("click", () => popup.classList.add("hidden"));
-
-    saveReviewBtn.addEventListener("click", async () => {
-        const user_id = localStorage.getItem("user_id");
-
-        try {
-            await fetch("http://localhost:3000/api/reviews/add", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body : JSON.stringify({
-                    user_id,
-                    book_id: currentBook.book_id,
-                    rating: popupRating,
-                    review_text: reviewText.value
-                })
-            });
-
-            await fetch("http://localhost:3000/api/progress", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body : JSON.stringify({
-                    user_id,
-                    book_id: currentBook.book_id,
-                    status: "Finished",
-                    current_page: currentBook.page_count || 0
-                })
-            });
-
-            await openList(currentList.list_id);
-        
-            popup.classList.add("hidden");
-
-        } catch (error) {
             console.error(error);
         }
-    });
 
-    removeBookBtn.addEventListener("click", async () => {
-        await fetch("http://localhost:3000/api/lists/delete-book", {
-            method: "DELETE",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                list_id: currentList.list_id,
-                book_id: currentBook.book_id
-            })
-        });
-        await openList(currentList.list_id);
-        popup.classList.add("hidden");
+        createListPopup.classList.add("hidden");
+        newListName.value = "";
     });
 
     loadLists();
